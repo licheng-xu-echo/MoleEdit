@@ -4,9 +4,44 @@ A **fully offline, dependency-free** browser-based molecular editor: open `.xyz`
 
 The UI is **bilingual (English / Chinese) and defaults to English**. It runs on Windows, Linux and macOS — just a modern browser is required (Chrome / Edge / Firefox / Safari).
 
-[English](#moledit--a-gaussview-style-molecular-editor) | [中文](#中文说明)
+[English](#moledit--a-gaussview-style-molecular-editor) | [中文](#中文说明) | [Contents](#contents)
 
 ![Main window](docs/main.png)
+
+## Contents
+
+**English**
+
+- [Features](#features)
+- [Quick start](#quick-start)
+  - [Windows](#windows)
+  - [Linux / macOS](#linux--macos)
+  - [After opening](#after-opening)
+- [User guide](#user-guide)
+  - [Language switch (English by default)](#language-switch-english-by-default)
+  - [View and selection](#view-and-selection)
+  - [Measure and edit bond length / bond angle / dihedral](#measure-and-edit-bond-length--bond-angle--dihedral)
+  - [Gaussian LOG Results panel](#gaussian-log-results-panel)
+  - [Move atom / move fragment](#move-atom--move-fragment)
+  - [Display styles](#display-styles)
+  - [Multi-frame files](#multi-frame-files)
+  - [Export](#export)
+- [Supported file formats](#supported-file-formats)
+- [Project structure](#project-structure)
+- [Development and testing](#development-and-testing)
+- [Credits](#credits)
+- [Known limitations / FAQ](#known-limitations--faq)
+
+**中文**
+
+- [功能](#功能)
+- [快速开始](#快速开始)
+- [操作指南](#操作指南)
+- [支持的文件格式](#支持的文件格式)
+- [项目结构](#项目结构)
+- [开发与测试](#开发与测试)
+- [致谢](#致谢)
+- [常见问题 / 已知限制](#常见问题--已知限制)
 
 ---
 
@@ -256,6 +291,18 @@ Reports and screenshots: `tests/e2e-report.json` (product md5 snapshot + visual 
 界面支持**中英文切换，默认英文**；可在 Windows / Linux / macOS 使用，只需要一个现代浏览器（Chrome / Edge / Firefox / Safari）。
 
 ![主界面](docs/main.png)
+
+## 目录
+
+- [功能](#功能)
+- [快速开始](#快速开始)
+- [操作指南](#操作指南)
+- [支持的文件格式](#支持的文件格式)
+- [项目结构](#项目结构)
+- [开发与测试](#开发与测试)
+- [致谢](#致谢)
+- [常见问题 / 已知限制](#常见问题--已知限制)
+- [English version](#moledit--a-gaussview-style-molecular-editor)
 
 ## 功能
 
