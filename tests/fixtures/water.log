@@ -1,0 +1,77 @@
+ Entering Gaussian System, Link 0=g16
+ Initial command:
+ /usr/local/g16/l1.exe /tmp/moledit-test.inp
+
+ ******************************************
+ Gaussian 16:  ES64L-G16RevA.03 25-Dec-2016
+                 Date: Thu Nov 13 10:00:00 2025
+                 Host: moledit-test
+ ******************************************
+
+ #p opt freq b3lyp/6-31g(d)
+
+ water optimization
+
+ 0 1
+ Symbolic Z-matrix:
+ Charge =  0 Multiplicity = 1
+ O                    0.000000    0.000000    0.117300
+ H                    0.000000    0.757200   -0.469200
+ H                    0.000000   -0.757200   -0.469200
+
+                    Distance matrix (angstroms):
+                    1          2          3
+      1  O    0.000000
+      2  H    0.957200   0.000000
+      3  H    0.957200   1.514400   0.000000
+
+ Stoichiometry    H2O
+ Framework group  C2V[C2(O),SGV(H2)]
+ Deg. of freedom    1
+ Standard basis: 6-31G(d) (6D, 7F)
+
+                         Standard orientation:
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1          8           0        0.000000    0.000000    0.117300
+      2          1           0        0.000000    0.757200   -0.469200
+      3          1           0        0.000000   -0.757200   -0.469200
+ ---------------------------------------------------------------------
+
+ Rotational constants (GHZ):     278.4962     49.8601     41.5451
+
+ SCF Done:  E(RB3LYP) =  -76.4087956321     A.U. after    6 cycles
+             NFock=  6  Conv=0.31D-08     -V/T= 2.0028
+
+ GradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGrad
+ Berny optimization.
+ Cartesian Forces:  Max     0.001234 RMS     0.000345
+
+                         Standard orientation:
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y          Z
+ ---------------------------------------------------------------------
+      1          8           0        0.000000    0.000000    0.118000
+      2          1           0        0.000000    0.760000   -0.470000
+      3          1           0        0.000000   -0.760000   -0.470000
+ ---------------------------------------------------------------------
+
+ Rotational constants (GHZ):     279.1234     49.9876     41.6789
+
+ SCF Done:  E(RB3LYP) =  -76.4091234567     A.U. after    5 cycles
+             NFock=  5  Conv=0.12D-08     -V/T= 2.0028
+
+ Optimization completed.
+    -- Stationary point found.
+
+                          Final structure in terms of initial Z-matrix:
+
+                           ----------------------------
+                           ! Optimized Parameters !
+                           ! (Angstroms and Degrees)  !
+                           ----------------------------
+
+ Normal termination of Gaussian 16 at Thu Nov 13 10:01:00 2025.

@@ -1,0 +1,43 @@
+ Entering Link 1 = C:\G16W\G16.exe pid=  4321  ...
+
+ Copyright (c) 1988-2019, Gaussian, Inc.  All Rights Reserved.
+
+ ---------------------------------------------------------------
+ #p b3lyp/6-31g(d) opt
+ ---------------------------------------------------------------
+ Water optimization
+
+ Symbolic Z-matrix:
+ Charge =  0 Multiplicity = 1
+ O
+ H  1  0.96
+ H  1  0.96  2  104.5
+
+                         Standard orientation:                         
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1            8            0     0.000000     0.000000     0.000000
+      2            1            0     0.763000     0.586000     0.000000
+      3            1            0    -0.763000     0.586000     0.000000
+ ---------------------------------------------------------------------
+ SCF Done:  E(RB3LYP) =  -76.4094031546     A.U. after   10 cycles
+
+                         Standard orientation:                         
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1            8            0     0.000000     0.000000     0.000000
+      2            1            0     0.756800     0.586000     0.000000
+      3            1            0    -0.756800     0.586000     0.000000
+ ---------------------------------------------------------------------
+ SCF Done:  E(RB3LYP) =  -76.4089399955     A.U. after    6 cycles
+
+ Charge =  0 Multiplicity = 1
+
+ Job cpu time:       0 days  0 hours  0 minutes  3.2 seconds.
+ File lengths (MBytes):  RWF=      5 Int=      0 D2E=      0 Chk=      1 Scr=      1
+
+ Normal termination of Gaussian 16 at Thu Oct 30 12:34:56 2025.

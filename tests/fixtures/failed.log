@@ -1,0 +1,32 @@
+ Entering Gaussian System, Link 0=g09
+ ******************************************
+ Gaussian 09:  ES64L-G09RevD.01 24-Apr-2013
+ ******************************************
+
+ #p opt hf/3-21g
+
+ ammonia optimization (will fail)
+
+ 0 1
+ Symbolic Z-matrix:
+ Charge =  0 Multiplicity = 1
+ N                    0.000000    0.000000    0.000000
+ H                    0.000000    0.940000    0.330000
+ H                    0.813800   -0.470000    0.330000
+ H                   -0.813800   -0.470000    0.330000
+
+                          Input orientation:
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1          7           0        0.000000    0.000000    0.000000
+      2          1           0        0.000000    0.940000    0.330000
+      3          1           0        0.813800   -0.470000    0.330000
+      4          1           0       -0.813800   -0.470000    0.330000
+ ---------------------------------------------------------------------
+
+ SCF Done:  E(RHF) =  -55.9887654321     A.U. after   12 cycles
+
+ Error termination request processed by link 9999.
+ Error termination via Lnk1e in /usr/local/g09/l9999.exe at Thu Nov 13 10:02:00 2025.

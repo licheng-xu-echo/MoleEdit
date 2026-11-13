@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>chrome smoke</title></head>
+<body style="margin:0;background:#eee">
+<canvas id="c" width="400" height="300" style="display:block;margin:20px auto;background:#fff"></canvas>
+<div id="msg" style="font:16px sans-serif;text-align:center"></div>
+<script>
+  var ctx = document.getElementById('c').getContext('2d');
+  var g = ctx.createRadialGradient(150, 120, 10, 200, 150, 90);
+  g.addColorStop(0, '#ffd166'); g.addColorStop(1, '#e76f51');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(200, 150, 80, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#264653'; ctx.lineWidth = 4; ctx.stroke();
+  ctx.font = '24px system-ui'; ctx.fillStyle = '#264653'; ctx.fillText('Canvas OK 中文', 100, 30);
+  document.getElementById('msg').textContent = 'headless chrome canvas smoke ok';
+  window.__SMOKE_OK = true;
+</script>
+</body>
+</html>

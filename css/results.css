@@ -1,0 +1,389 @@
+/* ============================================================================
+ * MolEdit v2 — css/results.css
+ * “计算结果”面板（GaussView 风格，浅色主题、紧凑、可滚动）。
+ * 仅作用于 #results-panel 内部，与 app.css 的浅色主题变量协调（带 fallback）。
+ * 负责人：results-dev（INTERFACE2.md §1 / §6）
+ * ========================================================================== */
+
+#results-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 10px 12px 14px;
+  font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", Arial, sans-serif;
+  font-size: 12px;
+  color: var(--text, #1e2733);
+}
+
+#results-panel *,
+#results-panel *::before,
+#results-panel *::after {
+  box-sizing: border-box;
+}
+
+#results-panel [hidden] {
+  display: none !important;
+}
+
+/* ------------------------------- 空状态 ------------------------------- */
+
+#results-panel .res-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 42px 18px;
+  color: var(--muted, #8a96a8);
+}
+
+#results-panel .res-empty-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2, #556277);
+}
+
+#results-panel .res-empty-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  max-width: 280px;
+}
+
+/* ------------------------------- 内容区 ------------------------------- */
+
+#results-panel .res-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* job 选择 */
+#results-panel .res-job-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#results-panel .res-job-row[hidden] {
+  display: none !important;
+}
+
+#results-panel .res-job-label {
+  flex: none;
+  margin-right: 7px;
+  font-size: 11px;
+  color: var(--text-2, #556277);
+}
+
+#results-panel .res-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong, #c9d3e0);
+  border-radius: var(--radius-sm, 6px);
+  background: #fff;
+  color: var(--text, #1e2733);
+  font-size: 12px;
+}
+
+/* ------------------------------- 概要表 ------------------------------- */
+
+#results-panel .res-summary {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border, #dde3ec);
+  border-radius: var(--radius, 8px);
+  background: #fff;
+  padding: 3px 10px;
+  box-shadow: 0 1px 2px rgba(20, 32, 52, 0.03);
+}
+
+#results-panel .res-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px dashed var(--border, #dde3ec);
+  line-height: 1.35;
+}
+
+#results-panel .res-row:last-child {
+  border-bottom: 0;
+}
+
+#results-panel .res-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-right: 10px;
+  color: var(--text-2, #556277);
+  font-size: 11.5px;
+}
+
+#results-panel .res-value {
+  flex: 0 0 auto;
+  max-width: 62%;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--text, #1e2733);
+  overflow-wrap: anywhere;
+}
+
+#results-panel .res-row-route .res-value {
+  font-family: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--text-2, #556277);
+  max-width: 64%;
+}
+
+/* ------------------------------- 图表区块 ------------------------------- */
+
+#results-panel .res-section {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border, #dde3ec);
+  min-width: 0;
+}
+
+#results-panel .res-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-2, #556277);
+}
+
+#results-panel .res-chart {
+  display: block;
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--border, #dde3ec);
+  border-radius: var(--radius-sm, 6px);
+  min-width: 0;
+}
+
+#results-panel .res-chart-energy {
+  height: 158px;
+}
+
+#results-panel .res-chart-conv {
+  height: 196px;
+}
+
+#results-panel .res-note {
+  margin: 5px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted, #8a96a8);
+}
+
+#results-panel .res-note.is-error {
+  color: var(--danger, #c0271b);
+}
+
+/* ------------------------------- 频率列表 ------------------------------- */
+
+#results-panel .res-freq-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 176px;
+  overflow-y: auto;
+  border: 1px solid var(--border, #dde3ec);
+  border-radius: var(--radius-sm, 6px);
+  background: #fff;
+}
+
+#results-panel .res-freq-list:empty {
+  display: none;
+}
+
+#results-panel .freq-row {
+  display: flex;
+  align-items: baseline;
+  width: 100%;
+  margin: 0;
+  padding: 3px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--panel-soft, #f6f8fb);
+  background: transparent;
+  color: var(--text, #1e2733);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  outline-offset: -2px;
+}
+
+#results-panel .freq-row:last-child {
+  border-bottom: 0;
+}
+
+#results-panel .freq-row:hover {
+  background: var(--panel-soft, #f6f8fb);
+}
+
+#results-panel .freq-row.is-active {
+  background: var(--accent-soft, #e9efff);
+  box-shadow: inset 2px 0 0 var(--accent, #2563eb);
+}
+
+#results-panel .freq-index {
+  flex: none;
+  width: 22px;
+  color: var(--muted, #8a96a8);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  padding-right: 8px;
+}
+
+#results-panel .freq-value {
+  flex: 1 1 auto;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+#results-panel .freq-ir {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  color: var(--muted, #8a96a8);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#results-panel .freq-row.is-imaginary .freq-value {
+  color: var(--danger, #c0271b);
+  font-weight: 600;
+}
+
+#results-panel .freq-row.is-imaginary .freq-index {
+  color: var(--danger, #c0271b);
+}
+
+/* ------------------------------- 频率控制条 ------------------------------- */
+
+#results-panel .res-freq-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  min-width: 0;
+}
+
+#results-panel .res-freq-controls > * {
+  margin-right: 6px;
+  margin-bottom: 4px;
+}
+
+#results-panel .res-freq-controls > *:last-child {
+  margin-right: 0;
+}
+
+#results-panel .res-btn {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border-strong, #c9d3e0);
+  border-radius: var(--radius-sm, 6px);
+  background: #fff;
+  color: var(--text, #1e2733);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 1px rgba(20, 32, 52, 0.03);
+}
+
+#results-panel .res-btn:hover:not(:disabled) {
+  border-color: var(--accent-border, #c3d5fd);
+  background: var(--accent-soft, #e9efff);
+  color: var(--accent-strong, #1d4ed8);
+}
+
+#results-panel .res-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#results-panel .res-btn:focus-visible,
+#results-panel .res-select:focus-visible,
+#results-panel .res-amp-input:focus-visible,
+#results-panel .freq-row:focus-visible {
+  outline: 2px solid var(--accent-border, #c3d5fd);
+  outline-offset: 1px;
+}
+
+#results-panel .res-amp {
+  display: flex;
+  align-items: center;
+  flex: 1 1 150px;
+  min-width: 132px;
+  max-width: 210px;
+  color: var(--text-2, #556277);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+#results-panel .res-amp-label {
+  flex: none;
+  margin-right: 6px;
+}
+
+#results-panel .res-amp-input {
+  flex: 1 1 auto;
+  min-width: 48px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent, #2563eb);
+  cursor: pointer;
+}
+
+#results-panel .res-amp-input:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#results-panel .res-amp-value {
+  flex: none;
+  width: 32px;
+  margin-left: 5px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2, #556277);
+}
+
+#results-panel .res-mode-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-2, #556277);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------- 滚动条 ------------------------------- */
+
+#results-panel .res-freq-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#results-panel .res-freq-list::-webkit-scrollbar-thumb {
+  background: #d3dbe6;
+  border-radius: 4px;
+}
+
+#results-panel .res-freq-list::-webkit-scrollbar-thumb:hover {
+  background: #c0cad9;
+}
+
+#results-panel .res-freq-list::-webkit-scrollbar-track {
+  background: transparent;
+}

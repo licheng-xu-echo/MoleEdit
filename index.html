@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MolEdit — Molecular Editor</title>
+  <!-- 内联 favicon：避免 http:// 方式打开时浏览器自动请求 /favicon.ico 造成 404 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23171a21'/%3E%3Ccircle cx='11' cy='13' r='4' fill='%23ff6b5e'/%3E%3Ccircle cx='21' cy='20' r='4' fill='%2358c4ff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/results.css">
+</head>
+<body>
+<div id="app">
+  <!-- ============================ 顶栏 ============================ -->
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="21" height="21">
+          <ellipse cx="12" cy="12" rx="9.6" ry="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <ellipse cx="12" cy="12" rx="9.6" ry="4" fill="none" stroke="currentColor" stroke-width="1.4" transform="rotate(60 12 12)"/>
+          <ellipse cx="12" cy="12" rx="9.6" ry="4" fill="none" stroke="currentColor" stroke-width="1.4" transform="rotate(-60 12 12)"/>
+          <circle cx="12" cy="12" r="2.1" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="brand-name">MolEdit</span>
+      <span class="brand-sub" data-i18n="app.brandSub">Molecular Editor</span>
+    </div>
+
+    <div class="topbar-sep" aria-hidden="true"></div>
+
+    <div class="topbar-group">
+      <input id="file-input" type="file" accept=".xyz,.sdf,.mol,.gjf,.com,.log,.out,.txt" hidden>
+      <button id="btn-open" class="btn btn-primary" type="button"
+              title="Open a local file (.xyz / .sdf / .gjf / .log)"
+              data-i18n-title="toolbar.openTitle" data-i18n="toolbar.open">Open file</button>
+      <select id="sample-select" class="select"
+              title="Load a molecule from the sample library" aria-label="Sample library"
+              data-i18n-title="toolbar.sampleTitle" data-i18n-aria-label="toolbar.sampleAria">
+        <option value="" data-i18n="toolbar.loadSample">Load sample…</option>
+      </select>
+    </div>
+
+    <div class="topbar-sep" aria-hidden="true"></div>
+
+    <div class="topbar-group">
+      <button id="btn-undo" class="btn" type="button" title="Undo (Ctrl+Z)"
+              data-i18n-title="toolbar.undoTitle" data-i18n="toolbar.undo" disabled>Undo</button>
+      <button id="btn-redo" class="btn" type="button" title="Redo (Ctrl+Shift+Z / Ctrl+Y)"
+              data-i18n-title="toolbar.redoTitle" data-i18n="toolbar.redo" disabled>Redo</button>
+    </div>
+
+    <div class="topbar-spacer"></div>
+
+    <div class="topbar-group export-group">
+      <span class="topbar-label" data-i18n="toolbar.export">Export</span>
+      <span class="export-btns">
+        <button id="btn-export-xyz" class="btn" type="button" title="Export as XYZ file"
+                data-i18n-title="toolbar.exportXyzTitle" disabled>.xyz</button>
+        <button id="btn-export-gjf" class="btn" type="button" title="Export as Gaussian input file"
+                data-i18n-title="toolbar.exportGjfTitle" disabled>.gjf</button>
+        <button id="btn-export-sdf" class="btn" type="button" title="Export as SDF file"
+                data-i18n-title="toolbar.exportSdfTitle" disabled>.sdf</button>
+      </span>
+    </div>
+
+    <div class="topbar-sep" aria-hidden="true"></div>
+
+    <!-- 语言切换（事件由 js/ui.js 绑定；初始文本按当前语言，默认 en 时显示“中文”） -->
+    <div class="topbar-group">
+      <button id="lang-toggle" class="btn lang-toggle" type="button"
+              title="Switch to Chinese" aria-label="Switch language"
+              data-i18n-title="toolbar.langToggleTitle" data-i18n-aria-label="toolbar.langToggleAria"
+              data-i18n="toolbar.langToggle">中文</button>
+    </div>
+  </header>
+
+  <!-- ============================ 主体 ============================ -->
+  <main id="main">
+    <!-- 左侧工具竖栏 -->
+    <aside id="toolbar" role="toolbar" aria-label="Viewport tools" aria-orientation="vertical"
+           data-i18n-aria-label="toolbar.toolbarAria">
+      <button id="tool-select" data-tool="select" class="tool-btn is-active" type="button"
+              title="Select tool: click atoms / drag to rotate" aria-pressed="true"
+              data-i18n-title="tools.selectTitle">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 3.4l13.4 6.8-5.9 1.5L9.9 17 5.2 3.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span data-i18n="tools.select">Select</span>
+      </button>
+      <button id="tool-rotate" data-tool="rotate" class="tool-btn" type="button"
+              title="Rotate tool: drag with the left button to rotate the view" aria-pressed="false"
+              data-i18n-title="tools.rotateTitle">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.8 12a7.8 7.8 0 1 1-2.5-5.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 4.4v4.2h-4.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span data-i18n="tools.rotate">Rotate</span>
+      </button>
+      <div class="toolbar-sep" aria-hidden="true"></div>
+      <button id="tool-move-atom" data-tool="move-atom" class="tool-btn" type="button"
+              title="Move atom: drag an atom (one drag = one undo step)" aria-pressed="false"
+              data-i18n-title="tools.moveAtomTitle">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.4" fill="currentColor"/><path d="M12 2.6v3.2M12 18.2v3.2M2.6 12h3.2M18.2 12h3.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 2.6L10.4 4.2M12 2.6l1.6 1.6M12 21.4l-1.6-1.6M12 21.4l1.6-1.6M2.6 12l1.6-1.6M2.6 12l1.6 1.6M21.4 12l-1.6-1.6M21.4 12l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span data-i18n="tools.moveAtom">Move atom</span>
+      </button>
+      <button id="tool-move-fragment" data-tool="move-fragment" class="tool-btn" type="button"
+              title="Move fragment: drag an atom to move its whole connected fragment" aria-pressed="false"
+              data-i18n-title="tools.moveFragmentTitle">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8.4" r="3" fill="currentColor"/><circle cx="16" cy="15.6" r="3" fill="currentColor"/><path d="M10.2 9.9l3.6 2.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.2 15.6h3.4M17.4 8.4h3.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M3.2 15.6l1.4-1.3M3.2 15.6l1.4 1.3M20.8 8.4l-1.4-1.3M20.8 8.4l-1.4 1.3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span data-i18n="tools.moveFragment">Move fragment</span>
+      </button>
+      <button id="tool-pan" data-tool="pan" class="tool-btn" type="button"
+              title="Pan tool: drag to pan the view" aria-pressed="false"
+              data-i18n-title="tools.panTitle">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11.4V6.6a1.5 1.5 0 0 1 3 0v4.2m0-1.2v-2a1.5 1.5 0 0 1 3 0v2.6m0-.6a1.5 1.5 0 0 1 3 0v5.2c0 3.5-2.3 6.4-5.8 6.4-3.2 0-4.5-1.6-6.2-4.4l-1.5-2.6a1.5 1.5 0 0 1 2.5-1.6L9 13.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span data-i18n="tools.pan">Pan</span>
+      </button>
+    </aside>
+
+    <!-- 中央视口 -->
+    <section id="viewport" aria-label="3D molecular viewport" data-i18n-aria-label="panel.viewportAria">
+      <canvas id="viewport-canvas"></canvas>
+      <div id="viewport-overlay" aria-hidden="true"></div>
+      <div id="empty-hint">
+        <svg viewBox="0 0 24 24" width="52" height="52" aria-hidden="true">
+          <ellipse cx="12" cy="12" rx="9.5" ry="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <ellipse cx="12" cy="12" rx="9.5" ry="4" fill="none" stroke="currentColor" stroke-width="1.2" transform="rotate(60 12 12)"/>
+          <ellipse cx="12" cy="12" rx="9.5" ry="4" fill="none" stroke="currentColor" stroke-width="1.2" transform="rotate(-60 12 12)"/>
+          <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
+        </svg>
+        <p class="empty-hint-title" data-i18n="empty.title">Open an .xyz / .sdf / .gjf / .log file, or load one from the sample library</p>
+        <p id="empty-hint-sub" class="empty-hint-sub" data-i18n="empty.sub">Supports XYZ, SDF, Gaussian input and output files · Multi-frame datasets supported</p>
+      </div>
+      <div id="viewport-hud" class="viewport-hud" hidden></div>
+      <div id="mouse-hint" class="mouse-hint" data-i18n="hints.mouse">Click to select atoms · Shift to add · Drag to rotate · Scroll to zoom</div>
+    </section>
+
+    <!-- 右侧面板（Tab：分子 / 结果；结果页由 js/results.js 填充） -->
+    <aside id="sidepanel" aria-label="Molecular info and editing panel"
+           data-i18n-aria-label="panel.sidepanelAria">
+      <div id="side-tabs" class="side-tabs" role="tablist" aria-label="Sidebar tabs"
+           data-i18n-aria-label="panel.tabsAria">
+        <button id="tab-molecule" class="side-tab is-active" type="button" role="tab"
+                aria-selected="true" aria-controls="tab-page-molecule"
+                data-i18n="panel.tabMolecule">Molecule</button>
+        <button id="tab-results" class="side-tab" type="button" role="tab"
+                aria-selected="false" aria-controls="tab-page-results" disabled
+                data-i18n="panel.tabResults">Results</button>
+      </div>
+
+      <div id="tab-page-molecule" class="side-page" role="tabpanel">
+        <!-- 文件信息 -->
+        <section class="panel-section">
+          <h2 class="panel-title" data-i18n="panel.fileInfo">File info</h2>
+          <div class="info-grid">
+            <div class="info-row">
+              <div class="info-label" data-i18n="info.title">Title</div>
+              <div id="mol-title" class="info-value info-title" title="—">—</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label" data-i18n="info.format">Format</div>
+              <div id="mol-format" class="info-value">—</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label" data-i18n="info.dataset">Dataset</div>
+              <div class="info-value dataset-cell">
+                <select id="dataset-select" class="select select-sm" disabled aria-label="Dataset (frame)"
+                        data-i18n-aria-label="info.datasetAria">
+                  <option value="0" data-i18n="info.singleFrame">Single frame</option>
+                </select>
+                <span id="dataset-label" class="dataset-label">—</span>
+              </div>
+            </div>
+            <div class="info-row info-row-2col">
+              <div class="info-cell">
+                <span class="info-label" data-i18n="info.atoms">Atoms</span>
+                <span id="atom-count" class="info-value num">0</span>
+              </div>
+              <div class="info-cell">
+                <span class="info-label" data-i18n="info.bonds">Bonds</span>
+                <span id="bond-count" class="info-value num">0</span>
+              </div>
+            </div>
+            <div class="info-row info-row-2col">
+              <div class="info-cell">
+                <span class="info-label" data-i18n="info.charge">Charge</span>
+                <input id="charge-input" class="input num-input" type="number" step="1" value="0" disabled
+                       aria-label="Total charge" data-i18n-aria-label="info.chargeAria">
+              </div>
+              <div class="info-cell">
+                <span class="info-label" data-i18n="info.multiplicity">Multiplicity</span>
+                <input id="multiplicity-input" class="input num-input" type="number" step="1" min="1" value="1" disabled
+                       aria-label="Spin multiplicity" data-i18n-aria-label="info.multiplicityAria">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 选择与测量 -->
+        <section class="panel-section">
+          <h2 class="panel-title" data-i18n="panel.selection">Selection &amp; measurements</h2>
+          <div class="selection-head">
+            <span class="muted" data-i18n="measure.selectionOrder">Selected atoms (click order)</span>
+            <span id="selection-count" class="selection-count">0 / 4</span>
+          </div>
+          <div id="selection-list" class="selection-list" data-i18n="measure.noSelection">No atoms selected</div>
+          <div class="measure-table">
+            <div class="measure-row">
+              <span class="measure-label" data-i18n-html="measure.distance">Bond length <em>d</em></span>
+              <span id="measure-distance" class="measure-value">—</span>
+            </div>
+            <div class="measure-row">
+              <span class="measure-label" data-i18n-html="measure.angle">Bond angle <em>∠</em></span>
+              <span id="measure-angle" class="measure-value">—</span>
+            </div>
+            <div class="measure-row">
+              <span class="measure-label" data-i18n-html="measure.dihedral">Dihedral angle <em>τ</em></span>
+              <span id="measure-dihedral" class="measure-value">—</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 几何编辑 -->
+        <section class="panel-section">
+          <h2 class="panel-title" data-i18n="panel.geometry">Geometry editing</h2>
+
+          <div class="edit-card" id="card-bond-length">
+            <div class="edit-title">
+              <span data-i18n="edit.bondLengthTitle">Bond length</span>
+              <span class="edit-hint" data-i18n="edit.bondLengthHint">Select 2 atoms</span>
+            </div>
+            <div class="field-row">
+              <label for="bond-length-input" data-i18n="edit.targetLength">Target length (Å)</label>
+              <input id="bond-length-input" class="input" type="number" step="0.001" min="0.001"
+                     placeholder="e.g. 1.2000" data-i18n-placeholder="edit.targetLengthPlaceholder" disabled>
+            </div>
+            <div class="field-row">
+              <label for="bond-length-move" data-i18n="edit.moveMode">Move mode</label>
+              <select id="bond-length-move" class="select" disabled>
+                <option value="j" data-i18n="edit.moveJ">Move atom 2 side</option>
+                <option value="i" data-i18n="edit.moveI">Move atom 1 side</option>
+                <option value="smaller" data-i18n="edit.moveSmaller">Move smaller fragment</option>
+              </select>
+            </div>
+            <button id="btn-apply-bond-length" class="btn btn-apply" type="button" disabled
+                    data-i18n="edit.applyBondLength">Apply bond length</button>
+          </div>
+
+          <div class="edit-card" id="card-angle">
+            <div class="edit-title">
+              <span data-i18n="edit.bondAngleTitle">Bond angle</span>
+              <span class="edit-hint" data-i18n="edit.bondAngleHint">Select 3 atoms (2nd is the vertex)</span>
+            </div>
+            <div class="field-row">
+              <label for="angle-input" data-i18n="edit.targetAngle">Target angle (°)</label>
+              <input id="angle-input" class="input" type="number" step="0.01" min="0.01" max="179.99"
+                     placeholder="e.g. 104.5200" data-i18n-placeholder="edit.targetAnglePlaceholder" disabled>
+            </div>
+            <div class="field-row">
+              <label for="angle-move" data-i18n="edit.moveMode">Move mode</label>
+              <select id="angle-move" class="select" disabled>
+                <option value="k" data-i18n="edit.moveK">Move atom 3 side</option>
+                <option value="i" data-i18n="edit.moveI">Move atom 1 side</option>
+                <option value="smaller" data-i18n="edit.moveSmaller">Move smaller fragment</option>
+              </select>
+            </div>
+            <button id="btn-apply-angle" class="btn btn-apply" type="button" disabled
+                    data-i18n="edit.applyBondAngle">Apply bond angle</button>
+          </div>
+
+          <div class="edit-card" id="card-dihedral">
+            <div class="edit-title">
+              <span data-i18n="edit.dihedralTitle">Dihedral angle</span>
+              <span class="edit-hint" data-i18n="edit.dihedralHint">Select 4 atoms (axis is 2–3)</span>
+            </div>
+            <div class="field-row">
+              <label for="dihedral-input" data-i18n="edit.targetAngle">Target angle (°)</label>
+              <input id="dihedral-input" class="input" type="number" step="0.01" min="-180" max="180"
+                     placeholder="e.g. 60.0000" data-i18n-placeholder="edit.targetDihedralPlaceholder" disabled>
+            </div>
+            <div class="field-row">
+              <label for="dihedral-move" data-i18n="edit.moveMode">Move mode</label>
+              <select id="dihedral-move" class="select" disabled>
+                <option value="l" data-i18n="edit.moveL">Rotate atom 4 side</option>
+                <option value="a" data-i18n="edit.moveA">Rotate atom 1 side</option>
+                <option value="smaller" data-i18n="edit.rotateSmaller">Rotate smaller fragment</option>
+              </select>
+            </div>
+            <button id="btn-apply-dihedral" class="btn btn-apply" type="button" disabled
+                    data-i18n="edit.applyDihedral">Apply dihedral angle</button>
+          </div>
+        </section>
+
+        <!-- 显示设置 -->
+        <section class="panel-section">
+          <h2 class="panel-title" data-i18n="panel.display">Display settings</h2>
+          <div class="field-row">
+            <label for="style-select" data-i18n="display.style">Display style</label>
+            <select id="style-select" class="select">
+              <option value="ballstick" data-i18n="display.ballstick">Ball &amp; stick</option>
+              <option value="spacefill" data-i18n="display.spacefill">Spacefill</option>
+              <option value="stick" data-i18n="display.stick">Stick</option>
+              <option value="wireframe" data-i18n="display.wireframe">Wireframe</option>
+            </select>
+          </div>
+          <div class="toggle-row">
+            <label class="check"><input id="toggle-labels" type="checkbox" checked> <span data-i18n="display.labels">Element symbols</span></label>
+            <label class="check"><input id="toggle-indices" type="checkbox"> <span data-i18n="display.indices">Atom indices</span></label>
+            <label class="check"><input id="toggle-axes" type="checkbox" checked> <span data-i18n="display.axes">Axes</span></label>
+          </div>
+          <div class="btn-row">
+            <button id="btn-rebond" class="btn" type="button" data-i18n="display.rebond">Re-infer bonds</button>
+          </div>
+          <div class="btn-row">
+            <button id="btn-clear-selection" class="btn" type="button" data-i18n="display.clearSelection">Clear selection</button>
+            <button id="btn-reset-view" class="btn" type="button" title="Reset view (F)"
+                    data-i18n-title="display.resetViewTitle" data-i18n="display.resetView">Reset view</button>
+          </div>
+          <p class="kbd-hint" data-i18n="hints.keyboard">Shortcuts: Ctrl+Z undo · Ctrl+Shift+Z / Ctrl+Y redo · Esc clear selection · F reset view</p>
+        </section>
+      </div>
+
+      <div id="tab-page-results" class="side-page" role="tabpanel" hidden>
+        <div id="results-panel"></div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ============================ 状态栏 ============================ -->
+  <footer id="statusbar">
+    <div id="status-bar" data-i18n="app.ready">Ready</div>
+  </footer>
+
+  <!-- 错误横幅 -->
+  <div id="error-banner" role="alert" title="Click to close" data-i18n-title="app.errorCloseTitle" hidden></div>
+</div>
+
+<!-- 固定加载顺序（INTERFACE2.md §2），全部为经典脚本 -->
+<script src="js/core.js"></script>
+<script src="js/parsers.js"></script>
+<script src="js/gausslog.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/samples.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/results.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

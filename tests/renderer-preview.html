@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MolRender 渲染器预览 / 自测</title>
+<style>
+  :root {
+    --bg: #eef1f5;
+    --panel: #ffffff;
+    --line: #d7dde5;
+    --text: #243040;
+    --muted: #6b7887;
+    --accent: #2f6fed;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Microsoft YaHei", Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    overflow: hidden;
+  }
+  #bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    padding: 8px 12px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+  }
+  #bar h1 {
+    margin: 0 6px 0 0;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .02em;
+  }
+  #bar .tag {
+    font-size: 11px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 1px 8px;
+    margin-right: 6px;
+  }
+  #bar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 3px; }
+  button {
+    font: inherit;
+    padding: 5px 11px;
+    border: 1px solid var(--line);
+    background: #f8fafc;
+    color: var(--text);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  button:hover { background: #eef4ff; border-color: #b9cdf5; }
+  button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(47, 111, 237, .35);
+  }
+  #spacer { flex: 1 1 auto; }
+  #scene-name { color: var(--muted); font-size: 12px; }
+  #stage { position: relative; flex: 1 1 auto; min-height: 0; background: #ffffff; }
+  #cv { display: block; width: 100%; height: 100%; }
+  #foot {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 12px;
+    border-top: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  #hint { flex: 1 1 auto; }
+  #selfcheck.pass { color: #1a7f37; font-weight: 600; }
+  #selfcheck.fail { color: #c62828; font-weight: 700; }
+  #error-banner {
+    position: fixed;
+    left: 50%;
+    top: 54px;
+    transform: translateX(-50%);
+    z-index: 99;
+    max-width: 72vw;
+    padding: 9px 14px;
+    background: #fff4f4;
+    border: 1px solid #e2a0a0;
+    border-radius: 8px;
+    color: #b3251d;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .14);
+  }
+  /* 旧内核（如 QtWebEngine Chromium 56）不支持 flex gap，用 margin 兜底 */
+  @supports not (gap: 1px) {
+    #bar > * { margin-right: 7px; }
+    #bar #spacer { margin-right: 0; }
+    #foot > * { margin-right: 14px; }
+  }
+</style>
+</head>
+<body>
+  <header id="bar">
+    <h1>MolRender 渲染器</h1>
+    <span class="tag">renderer.js 自测页</span>
+    <span class="sep"></span>
+    <button type="button" data-scene="ballstick">球棍</button>
+    <button type="button" data-scene="select">选中+测量</button>
+    <button type="button" data-scene="spacefill">空间填充</button>
+    <button type="button" data-scene="stick">棍状</button>
+    <button type="button" data-scene="wireframe">线框</button>
+    <button type="button" data-scene="multi">多重键</button>
+    <button type="button" data-scene="displace">振动位移</button>
+    <button type="button" data-scene="empty">空状态</button>
+    <span id="spacer"></span>
+    <span id="scene-name"></span>
+  </header>
+
+  <div id="stage"><canvas id="cv"></canvas></div>
+
+  <footer id="foot">
+    <span id="hint">拖拽旋转 · 滚轮缩放 · Shift+拖拽平移 · 点击选中（最多 4 个，自动测量）</span>
+    <span id="selfcheck">自检: 运行中…</span>
+  </footer>
+
+  <div id="error-banner" hidden></div>
+
+  <script src="../js/renderer.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    /* =================================================================
+     * 1) 内嵌测试分子数据（字面量；不依赖 core.js / 任何外部文件）
+     * ================================================================= */
+
+    // 苯 C6H6：环在 xy 平面，芳香键 order=4（渲染为双平行线，其中一条虚线）
+    var BENZENE = {
+      title: 'benzene',
+      atoms: [
+        { symbol: 'C', x: 0.0000, y: 1.3900, z: 0 },
+        { symbol: 'C', x: -1.2038, y: 0.6950, z: 0 },
+        { symbol: 'C', x: -1.2038, y: -0.6950, z: 0 },
+        { symbol: 'C', x: 0.0000, y: -1.3900, z: 0 },
+        { symbol: 'C', x: 1.2038, y: -0.6950, z: 0 },
+        { symbol: 'C', x: 1.2038, y: 0.6950, z: 0 },
+        { symbol: 'H', x: 0.0000, y: 2.4800, z: 0 },
+        { symbol: 'H', x: -2.1478, y: 1.2400, z: 0 },
+        { symbol: 'H', x: -2.1478, y: -1.2400, z: 0 },
+        { symbol: 'H', x: 0.0000, y: -2.4800, z: 0 },
+        { symbol: 'H', x: 2.1478, y: -1.2400, z: 0 },
+        { symbol: 'H', x: 2.1478, y: 1.2400, z: 0 }
+      ],
+      bonds: [
+        { i: 0, j: 1, order: 4 }, { i: 1, j: 2, order: 4 }, { i: 2, j: 3, order: 4 },
+        { i: 3, j: 4, order: 4 }, { i: 4, j: 5, order: 4 }, { i: 5, j: 0, order: 4 },
+        { i: 0, j: 6, order: 1 }, { i: 1, j: 7, order: 1 }, { i: 2, j: 8, order: 1 },
+        { i: 3, j: 9, order: 1 }, { i: 4, j: 10, order: 1 }, { i: 5, j: 11, order: 1 }
+      ]
+    };
+
+    // 氰基甲醛 O=CH-C≡N：同时含双键(2)与三键(3)
+    var CYANO = {
+      title: 'cyanoformaldehyde O=CH-C≡N',
+      atoms: [
+        { symbol: 'C', x: 0.00, y: 0.00, z: 0.00 },
+        { symbol: 'O', x: 1.12, y: 0.68, z: 0.10 },
+        { symbol: 'H', x: -0.62, y: -0.98, z: -0.08 },
+        { symbol: 'C', x: -1.40, y: 0.15, z: 0.02 },
+        { symbol: 'N', x: -2.56, y: 0.30, z: 0.04 }
+      ],
+      bonds: [
+        { i: 0, j: 1, order: 2 }, { i: 0, j: 2, order: 1 },
+        { i: 0, j: 3, order: 1 }, { i: 3, j: 4, order: 3 }
+      ]
+    };
+
+    // 场景定义：每个场景 = 分子 + 样式 + 选中/测量 + 初始倾斜（展示 3D 透视）
+    var SCENES = {
+      ballstick: {
+        title: '苯 C6H6 · 球棍模型（芳香键 order=4）',
+        mol: BENZENE, style: 'ballstick', labels: true, indices: false,
+        selection: [], measurement: null, tilt: [0, -70]
+      },
+      select: {
+        title: '选中 4 原子 + 二面角测量引导（虚线 + 顶点圆弧 + 序号徽标）',
+        mol: BENZENE, style: 'ballstick', labels: true, indices: true,
+        selection: [0, 1, 2, 3],
+        measurement: { atoms: [0, 1, 2, 3], type: 'dihedral' },
+        hover: 4, tilt: [0, -70]
+      },
+      spacefill: {
+        title: '空间填充模型（半径 = vdW）',
+        mol: BENZENE, style: 'spacefill', labels: true, indices: false,
+        selection: [], measurement: null, tilt: [0, -60]
+      },
+      stick: {
+        title: '棍状模型（细原子・粗键）',
+        mol: BENZENE, style: 'stick', labels: false, indices: false,
+        selection: [], measurement: null, tilt: [0, -70]
+      },
+      wireframe: {
+        title: '线框模型（细线，按原子颜色分半）',
+        mol: BENZENE, style: 'wireframe', labels: false, indices: false,
+        selection: [], measurement: null, tilt: [0, -70]
+      },
+      multi: {
+        title: '多重键：C=O 双键（2 平行线） / C≡N 三键（3 平行线）',
+        mol: CYANO, style: 'ballstick', labels: true, indices: false,
+        selection: [], measurement: null, tilt: [40, -55]
+      },
+      displace: {
+        title: '振动位移（view.setDisplacements）：位移作用于原子/键/测量引导',
+        mol: BENZENE, style: 'ballstick', labels: true, indices: false,
+        selection: [0, 1, 2],
+        measurement: { atoms: [0, 1, 2], type: 'angle' },
+        // 苯环“交替径向”振动模式（单位 Å，世界坐标）；长度=原子数
+        displacements: [
+          [0, 0.15, 0.04],
+          [0.1299, -0.075, -0.04],
+          [-0.1299, -0.075, 0.04],
+          [0, 0.15, -0.04],
+          [0.1299, -0.075, 0.04],
+          [-0.1299, -0.075, -0.04],
+          [0, 0.22, 0.06],
+          [0.1905, -0.11, -0.06],
+          [-0.1905, -0.11, 0.06],
+          [0, 0.22, -0.06],
+          [0.1905, -0.11, 0.06],
+          [-0.1905, -0.11, -0.06]
+        ],
+        tilt: [0, -70]
+      },
+      empty: {
+        title: '空状态（mol = null）：只绘制背景 + 左下角坐标轴',
+        mol: null, style: 'ballstick', labels: true, indices: false,
+        selection: [], measurement: null, tilt: null
+      }
+    };
+
+    /* =================================================================
+     * 2) 错误显示（页面级捕获，便于截图检查控制台错误）
+     * ================================================================= */
+    var errBanner = document.getElementById('error-banner');
+    var errorLines = [];
+    function showError(msg) {
+      errorLines.push(String(msg));
+      errBanner.hidden = false;
+      errBanner.textContent = '⚠ ' + errorLines.join('\n⚠ ');
+    }
+    window.addEventListener('error', function (ev) {
+      showError('JS 运行错误: ' + (ev && ev.message ? ev.message : 'unknown') +
+        (ev && ev.lineno ? ' @' + ev.lineno + ':' + ev.colno : ''));
+    });
+    window.addEventListener('unhandledrejection', function (ev) {
+      showError('未处理的 Promise 拒绝: ' + (ev && ev.reason ? ev.reason : 'unknown'));
+    });
+
+    /* =================================================================
+     * 3) 渲染器自检（隐藏 canvas，独立 view，不干扰主视图）
+     * ================================================================= */
+    function runSelfTests() {
+      var results = [];
+      function check(name, fn) {
+        try {
+          var r = fn();
+          results.push({ name: name, ok: r !== false, detail: typeof r === 'string' ? r : '' });
+        } catch (err) {
+          results.push({ name: name, ok: false, detail: (err && err.message) ? err.message : String(err) });
+        }
+      }
+      function approx(a, b, tol) { return Math.abs(a - b) <= tol; }
+      function dist3(a, b) {
+        var dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+      }
+
+      var testCanvas = document.createElement('canvas');
+      testCanvas.style.cssText = 'position:fixed;left:-10000px;top:0;width:360px;height:280px;';
+      document.body.appendChild(testCanvas);
+      var view = MolRender.createView(testCanvas);
+      var mol = JSON.parse(JSON.stringify(BENZENE)); // 用副本，避免影响主场景数据
+      view.setMolecule(mol);
+      view.resize();
+
+      check('MolRender 全局对象与版本', function () {
+        if (typeof MolRender !== 'object' || typeof MolRender.createView !== 'function') throw new Error('缺少 createView');
+        if (!MolRender.version) throw new Error('缺少 version');
+        if (!Array.isArray(MolRender.styles) || MolRender.styles.length !== 4) throw new Error('styles 异常');
+        return 'v' + MolRender.version;
+      });
+
+      check('view 方法齐全（§7 + INTERFACE2 §5）', function () {
+        var required = ['setMolecule', 'setOptions', 'setOption', 'getOptions', 'setSelection', 'setHover',
+          'setMeasurement', 'setDisplacements', 'getDisplacements',
+          'resize', 'render', 'requestRender', 'frameAll', 'resetCamera', 'rotate',
+          'pan', 'zoom', 'pick', 'project', 'projectAll', 'screenRadius', 'screenDeltaToWorld', 'dispose'];
+        for (var i = 0; i < required.length; i++) {
+          if (typeof view[required[i]] !== 'function') throw new Error('缺少方法 ' + required[i]);
+        }
+        if (!('onRender' in view)) throw new Error('缺少 onRender 属性');
+        return required.length + ' 个方法';
+      });
+
+      check('默认选项值', function () {
+        var o = view.getOptions();
+        var exp = {
+          style: 'ballstick', labels: true, indices: false, showAxes: true,
+          background: '#ffffff', selectionColor: '#ff7a00', hoverColor: '#ffd166',
+          measurementColor: '#0f9d9d', bondWidth: 1, labelMinScreenRadius: 9
+        };
+        for (var k in exp) {
+          if (String(o[k]) !== String(exp[k])) throw new Error(k + '=' + o[k]);
+        }
+        return '10 项一致';
+      });
+
+      check('frameAll 取景（居中 / 占比合理）', function () {
+        view.resize();
+        view.frameAll();
+        var pts = view.projectAll();
+        var minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+        for (var i = 0; i < pts.length; i++) {
+          if (pts[i].x < minx) minx = pts[i].x;
+          if (pts[i].y < miny) miny = pts[i].y;
+          if (pts[i].x > maxx) maxx = pts[i].x;
+          if (pts[i].y > maxy) maxy = pts[i].y;
+        }
+        var cw = testCanvas.clientWidth, ch = testCanvas.clientHeight;
+        var minDim = Math.min(cw, ch);
+        var fill = Math.max(maxx - minx, maxy - miny) / minDim;
+        if (fill < 0.40 || fill > 0.95) throw new Error('占比=' + fill.toFixed(2));
+        if (minx < 0 || maxx > cw || miny < 0 || maxy > ch) throw new Error('超出视口');
+        return '占比=' + fill.toFixed(2);
+      });
+
+      check('project 返回结构', function () {
+        var p = view.project(0);
+        if (!p || typeof p !== 'object') throw new Error('非对象');
+        if (!isFinite(p.x) || !isFinite(p.y) || !isFinite(p.depth)) throw new Error('坐标非有限数');
+        if (typeof p.visible !== 'boolean') throw new Error('visible 非布尔');
+        return true;
+      });
+
+      check('projectAll 长度 / 可见性', function () {
+        var all = view.projectAll();
+        if (!Array.isArray(all) || all.length !== mol.atoms.length) throw new Error('长度=' + (all && all.length));
+        var vis = 0;
+        for (var i = 0; i < all.length; i++) if (all[i].visible) vis++;
+        if (vis !== mol.atoms.length) throw new Error('可见 ' + vis + '/' + mol.atoms.length);
+        return all.length + ' 原子';
+      });
+
+      check('screenRadius > 0', function () {
+        var r = view.screenRadius(0);
+        if (!(r > 1)) throw new Error('r=' + r);
+        return 'r=' + r.toFixed(1) + 'px';
+      });
+
+      check('pick 命中原子 / 空白返回 null', function () {
+        var p0 = view.project(0);
+        var hit = view.pick(p0.x, p0.y);
+        if (hit === null || hit === undefined) throw new Error('原子中心未命中');
+        if (view.pick(-20, -20) !== null) throw new Error('画布外应为 null');
+        return 'hit=' + hit;
+      });
+
+      check('screenDeltaToWorld 正交同尺度', function () {
+        var a = view.screenDeltaToWorld(20, 0);
+        var b = view.screenDeltaToWorld(0, 20);
+        var la = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+        var lb = Math.sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
+        var dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+        if (!(la > 1e-9 && lb > 1e-9)) throw new Error('零向量');
+        if (Math.abs(la - lb) > la * 0.02) throw new Error('长度不等');
+        if (Math.abs(dot) > la * lb * 0.02) throw new Error('不正交');
+        return '|a|=' + la.toFixed(4) + 'Å';
+      });
+
+      check('screenDeltaToWorld 拖动映射精确', function () {
+        var atom = mol.atoms[0];
+        var before = view.project(0);
+        var d = view.screenDeltaToWorld(12, -8, 0);
+        atom.x += d[0]; atom.y += d[1]; atom.z += d[2];
+        view.render();
+        var after = view.project(0);
+        atom.x -= d[0]; atom.y -= d[1]; atom.z -= d[2];
+        view.render();
+        var errX = after.x - before.x - 12;
+        var errY = after.y - before.y + 8;
+        if (!approx(errX, 0, 0.8) || !approx(errY, 0, 0.8)) {
+          throw new Error('屏幕位移 = ' + (after.x - before.x).toFixed(2) + ',' + (after.y - before.y).toFixed(2));
+        }
+        return '误差 ' + Math.max(Math.abs(errX), Math.abs(errY)).toFixed(3) + 'px';
+      });
+
+      check('拖动旋转有效且可逆（无万向节卡死）', function () {
+        var p0 = view.project(0);
+        var q0 = view.project(1);   // 原子 0 在 y 轴上，绕屏幕竖直轴旋转不动，用原子 1 判定
+        view.rotate(90, 0);
+        var p1 = view.project(0);
+        var q1 = view.project(1);
+        if (Math.abs(q1.x - q0.x) + Math.abs(q1.y - q0.y) < 2) throw new Error('旋转未生效');
+        view.rotate(-90, 0);
+        var p2 = view.project(0);
+        if (!approx(p2.x, p0.x, 0.5) || !approx(p2.y, p0.y, 0.5)) throw new Error('旋转不可逆');
+        return '可逆';
+      });
+
+      check('zoom 缩放生效', function () {
+        var r0 = view.screenRadius(0);
+        view.zoom(1.5);
+        var r1 = view.screenRadius(0);
+        view.zoom(1 / 1.5);
+        if (!(r1 > r0 * 1.3)) throw new Error(r0.toFixed(1) + ' -> ' + r1.toFixed(1));
+        return r0.toFixed(1) + ' → ' + r1.toFixed(1) + 'px';
+      });
+
+      check('切换样式不丢相机视角（方向不变 + 自动避免溢出）', function () {
+        var d0 = view.screenDeltaToWorld(10, 0);
+        var r0 = view.screenRadius(0);
+        view.setOption('style', 'spacefill');
+        var d1 = view.screenDeltaToWorld(10, 0);
+        var r1 = view.screenRadius(0);
+        // 视角方向（单位向量）必须一致：样式切换只允许缩放/平移自适应，不允许转向
+        var l0 = Math.sqrt(d0[0] * d0[0] + d0[1] * d0[1] + d0[2] * d0[2]) || 1;
+        var l1 = Math.sqrt(d1[0] * d1[0] + d1[1] * d1[1] + d1[2] * d1[2]) || 1;
+        for (var k = 0; k < 3; k++) {
+          if (Math.abs(d0[k] / l0 - d1[k] / l1) > 1e-6) throw new Error('视角方向改变');
+        }
+        if (!(r1 > r0)) throw new Error('空间填充半径未增大');
+        // 空间填充原子变大后，分子必须仍完整地在画布内（自动缩小）
+        var all = view.projectAll();
+        var cw = testCanvas.clientWidth, ch = testCanvas.clientHeight;
+        for (var i = 0; i < all.length; i++) {
+          if (all[i].x < 0 || all[i].x > cw || all[i].y < 0 || all[i].y > ch) {
+            throw new Error('空间填充超出画布');
+          }
+        }
+        view.setOption('style', 'ballstick');
+        return 'r ' + r0.toFixed(1) + '→' + r1.toFixed(1) + 'px';
+      });
+
+      check('四种样式均可渲染', function () {
+        ['ballstick', 'spacefill', 'stick', 'wireframe'].forEach(function (s) {
+          view.setOption('style', s);
+          view.render();
+        });
+        view.setOption('style', 'ballstick');
+        view.render();
+        return '4/4';
+      });
+
+      check('选中 / 悬停 / 测量设置', function () {
+        view.setSelection([0, 1, 2, 3]);
+        view.setHover(2);
+        view.setMeasurement({ atoms: [0, 1, 2, 3], type: 'dihedral' });
+        view.render();
+        view.setMeasurement({ atoms: [0, 1, 2], type: 'angle' });
+        view.render();
+        view.setMeasurement({ atoms: [0, 1], type: 'distance' });
+        view.render();
+        view.setMeasurement(null);
+        view.setHover(null);
+        view.setSelection([]);
+        view.render();
+        // 非法索引必须被安全忽略
+        view.setSelection([99, -1]);
+        view.setHover(99);
+        view.setMeasurement({ atoms: [0, 99], type: 'distance' });
+        view.render();
+        view.setSelection([]);
+        return true;
+      });
+
+      check('onRender 回调触发且入参正确', function () {
+        var called = 0;
+        var prev = view.onRender;
+        view.onRender = function (v) {
+          called++;
+          if (v !== view) throw new Error('回调参数不是 view');
+        };
+        view.render();
+        view.onRender = prev;
+        if (called !== 1) throw new Error('调用 ' + called + ' 次');
+        return '1 次/帧';
+      });
+
+      check('resize 与 DPR 同步', function () {
+        view.resize();
+        var ratio = window.devicePixelRatio || 1;
+        if (testCanvas.width !== Math.round(testCanvas.clientWidth * ratio)) {
+          throw new Error('backing=' + testCanvas.width + ' css=' + testCanvas.clientWidth);
+        }
+        return 'dpr=' + ratio + ' backing=' + testCanvas.width + 'px';
+      });
+
+      check('未知元素兜底（无 MolCore）', function () {
+        var m2 = {
+          atoms: [{ symbol: 'Xx', x: 0, y: 0, z: 0 }, { symbol: 'H', x: 1, y: 0, z: 0 }],
+          bonds: [{ i: 0, j: 1, order: 1 }]
+        };
+        view.setMolecule(m2);
+        view.render();
+        if (!(view.screenRadius(0) > 0)) throw new Error('未知元素半径为 0');
+        view.setMolecule(mol);
+        view.frameAll();
+        return 'CPK 兜底';
+      });
+
+      check('空分子安全（mol = null）', function () {
+        view.setMolecule(null);
+        view.render();
+        if (view.project(0).visible !== false) throw new Error('project 应不可见');
+        if (view.pick(10, 10) !== null) throw new Error('pick 应为 null');
+        if (view.projectAll().length !== 0) throw new Error('projectAll 应为空');
+        if (view.screenRadius(0) !== 0) throw new Error('screenRadius 应为 0');
+        view.setMolecule(mol);
+        view.frameAll();
+        return true;
+      });
+
+      /* ---------- v2 振动位移（INTERFACE2 §5） ---------- */
+      check('setDisplacements/getDisplacements API 存在', function () {
+        if (typeof view.setDisplacements !== 'function') throw new Error('缺少 setDisplacements');
+        if (typeof view.getDisplacements !== 'function') throw new Error('缺少 getDisplacements');
+        if (view.getDisplacements() !== null) throw new Error('初始应为 null');
+        return true;
+      });
+
+      check('位移投影：屏幕位移 = 世界增量（20px）', function () {
+        view.setMolecule(mol);
+        view.frameAll();
+        view.setDisplacements(null);
+        var p0 = view.project(1);
+        var w = view.screenDeltaToWorld(20, 0, 1);   // 原子1 深度处 +20px 对应的世界增量
+        view.setDisplacements([[0, 0, 0], [w[0], w[1], w[2]]]);
+        var p1 = view.project(1);
+        var dx = p1.x - p0.x, dy = p1.y - p0.y;
+        view.setDisplacements(null);
+        if (Math.abs(dx - 20) > 0.8 || Math.abs(dy) > 0.8) {
+          throw new Error('Δ=(' + dx.toFixed(2) + ',' + dy.toFixed(2) + ')');
+        }
+        return 'Δ=20.0px';
+      });
+
+      check('setDisplacements(null) 恢复原位置', function () {
+        view.setMolecule(mol);
+        view.frameAll();
+        var p0 = view.project(0);
+        view.setDisplacements([[0.5, 0.2, -0.1]]);
+        var p1 = view.project(0);
+        if (Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y) < 1) throw new Error('位移未生效');
+        view.setDisplacements(null);
+        var p2 = view.project(0);
+        if (Math.abs(p2.x - p0.x) > 1e-6 || Math.abs(p2.y - p0.y) > 1e-6) throw new Error('未恢复原位置');
+        if (view.getDisplacements() !== null) throw new Error('getDisplacements 应为 null');
+        return true;
+      });
+
+      check('位移深拷贝 / 长度小于原子数时其余为 0', function () {
+        view.setMolecule(mol);
+        view.frameAll();
+        var arr = [[0.3, 0, 0]];
+        view.setDisplacements(arr);
+        var got = view.getDisplacements();
+        if (!got || got.length !== 1) throw new Error('长度=' + (got && got.length));
+        if (Math.abs(got[0][0] - 0.3) > 1e-9) throw new Error('数值不一致');
+        got[0][0] = 99;
+        arr[0][0] = 77;
+        var got2 = view.getDisplacements();
+        if (Math.abs(got2[0][0] - 0.3) > 1e-9) throw new Error('不是深拷贝');
+        // 未提供位移的原子（索引 1）不应移动
+        var q0 = view.project(1);
+        view.setDisplacements(null);
+        var q1 = view.project(1);
+        if (Math.abs(q0.x - q1.x) > 1e-9 || Math.abs(q0.y - q1.y) > 1e-9) throw new Error('未提供的原子被误位移');
+        return 'len=1 深拷贝';
+      });
+
+      check('setMolecule 自动清空位移', function () {
+        view.setMolecule(mol);
+        view.setDisplacements([[1, 0, 0]]);
+        if (!view.getDisplacements()) throw new Error('位移未设置');
+        view.setMolecule(mol);
+        if (view.getDisplacements() !== null) throw new Error('setMolecule 未清空位移');
+        return true;
+      });
+
+      check('frameAll 使用未位移原子（动画不抖动）', function () {
+        view.setMolecule(mol);
+        view.frameAll();
+        view.setDisplacements(null);
+        view.render();
+        var p0 = view.project(0);
+        view.setDisplacements([[1.5, 0.7, 0.4]]);
+        view.frameAll();                    // 有位移时取景
+        view.setDisplacements(null);
+        var p1 = view.project(0);
+        if (Math.abs(p1.x - p0.x) > 1e-6 || Math.abs(p1.y - p0.y) > 1e-6) {
+          throw new Error('相机被位移影响 (Δ=' + (p1.x - p0.x).toFixed(3) + ')');
+        }
+        return true;
+      });
+
+      check('键端点随位移变化（像素验证）', function () {
+        var savedStyle = view.getOptions().style;
+        var two = {
+          atoms: [{ symbol: 'C', x: 0, y: 0, z: 0 }, { symbol: 'C', x: 2.2, y: 0, z: 0 }],
+          bonds: [{ i: 0, j: 1, order: 1 }]
+        };
+        view.setMolecule(two);
+        view.setOptions({ style: 'stick', labels: false, indices: false, showAxes: false });
+        view.frameAll();
+        view.setDisplacements(null);
+        view.render();
+        var p0 = view.project(0), p1 = view.project(1);
+        var dxs = p1.x - p0.x, dys = p1.y - p0.y;
+        var L = Math.sqrt(dxs * dxs + dys * dys) || 1;
+        var nx = -dys / L, ny = dxs / L;                 // 屏幕垂直方向
+        var w = view.screenDeltaToWorld(nx * 44, ny * 44, 0);
+        view.setDisplacements([[w[0], w[1], w[2]]]);
+        view.render();
+        var q0 = view.project(0);
+        var midOld = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+        var midNew = { x: (q0.x + p1.x) / 2, y: (q0.y + p1.y) / 2 };
+        var shift = Math.abs(midNew.x - midOld.x) + Math.abs(midNew.y - midOld.y);
+        var c2d = testCanvas.getContext('2d');
+        var dpr2 = testCanvas.width / (testCanvas.clientWidth || testCanvas.width) || 1;
+        var px = Math.round(midNew.x * dpr2), py = Math.round(midNew.y * dpr2);
+        var data = c2d.getImageData(px, py, 1, 1).data;
+        var lum = 0.299 * data[0] + 0.587 * data[1] + 0.114 * data[2];
+        view.setDisplacements(null);
+        view.setMolecule(mol);
+        view.setOptions({ style: savedStyle, labels: true, indices: false, showAxes: true });
+        view.frameAll();
+        if (shift < 15) throw new Error('键中点未随位移移动 shift=' + shift.toFixed(1));
+        if (!(lum < 210)) throw new Error('新键中点没有键像素 lum=' + lum.toFixed(1));
+        return 'shift=' + shift.toFixed(1) + 'px lum=' + lum.toFixed(0);
+      });
+
+      check('动画帧稳定：连续 setDisplacements + render 30 帧', function () {
+        view.setMolecule(mol);
+        view.frameAll();
+        var frames = 30;
+        for (var f = 0; f < frames; f++) {
+          var phase = (f / frames) * Math.PI * 2;
+          var amp = 0.25 * Math.sin(phase);
+          var arr = new Array(mol.atoms.length);
+          for (var ai = 0; ai < arr.length; ai++) arr[ai] = [amp * 0.3, amp, 0];
+          view.setDisplacements(arr);
+          view.render();
+          var all = view.projectAll();
+          for (var bi = 0; bi < all.length; bi++) {
+            if (!isFinite(all[bi].x) || !isFinite(all[bi].y) || !isFinite(all[bi].depth)) {
+              throw new Error('第 ' + f + ' 帧投影出现非有限值');
+            }
+          }
+        }
+        view.setDisplacements(null);
+        view.render();
+        return frames + ' 帧';
+      });
+
+      check('dispose 安全', function () {
+        view.dispose();
+        view.render();
+        view.requestRender();
+        return true;
+      });
+
+      testCanvas.parentNode.removeChild(testCanvas);
+      var ok = 0;
+      for (var i = 0; i < results.length; i++) if (results[i].ok) ok++;
+      return { results: results, ok: ok, total: results.length };
+    }
+
+    /* =================================================================
+     * 4) 主视图 + 场景
+     * ================================================================= */
+    var canvas = document.getElementById('cv');
+    var sceneNameEl = document.getElementById('scene-name');
+    var selfcheckEl = document.getElementById('selfcheck');
+    var hintEl = document.getElementById('hint');
+
+    var report = runSelfTests();
+    if (report.ok === report.total) {
+      selfcheckEl.className = 'pass';
+      selfcheckEl.textContent = '自检 ' + report.ok + '/' + report.total + ' 通过';
+    } else {
+      selfcheckEl.className = 'fail';
+      selfcheckEl.textContent = '自检失败 ' + (report.total - report.ok) + ' 项';
+      var fails = report.results.filter(function (r) { return !r.ok; });
+      showError('自检失败:\n' + fails.map(function (f) { return '· ' + f.name + '：' + f.detail; }).join('\n'));
+      if (window.console && console.error) console.error('MolRender 自检失败', fails);
+    }
+    window.__previewChecks = report;
+
+    var view = MolRender.createView(canvas);
+    window.__previewView = view;
+
+    var pageSelection = [];
+    var pageMeasurement = null;
+
+    function autoMeasurement(sel) {
+      if (sel.length === 2) return { atoms: sel.slice(), type: 'distance' };
+      if (sel.length === 3) return { atoms: sel.slice(), type: 'angle' };
+      if (sel.length === 4) return { atoms: sel.slice(), type: 'dihedral' };
+      return null;
+    }
+
+    function applySelection(sel, measurementSpec) {
+      pageSelection = sel.slice();
+      view.setSelection(pageSelection);
+      pageMeasurement = (measurementSpec === undefined) ? autoMeasurement(pageSelection) : measurementSpec;
+      view.setMeasurement(pageMeasurement);
+    }
+
+    function setActiveButton(sceneKey) {
+      var btns = document.querySelectorAll('#bar button[data-scene]');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].className = (btns[i].getAttribute('data-scene') === sceneKey) ? 'active' : '';
+      }
+    }
+
+    function applyScene(sceneKey) {
+      var key = SCENES[sceneKey] ? sceneKey : 'ballstick';
+      var sc = SCENES[key];
+      view.setMolecule(sc.mol || null);
+      view.setOptions({
+        style: sc.style,
+        labels: sc.labels !== false,
+        indices: !!sc.indices,
+        showAxes: true
+      });
+      // 先重置相机（默认朝向 + frameAll），再施加场景倾斜，保证每次点按钮结果确定
+      view.resetCamera();
+      if (sc.tilt) view.rotate(sc.tilt[0], sc.tilt[1]);
+      view.frameAll();   // P5：按当前样式 + 倾斜重新取景，保证每个场景都充满视口
+      // v2 振动位移（INTERFACE2 §5）：必须在 setMolecule/frameAll 之后设置（setMolecule 会清空）
+      view.setDisplacements(sc.displacements || null);
+      applySelection(sc.selection || [], sc.measurement === undefined ? undefined : sc.measurement);
+      view.setHover(sc.hover === undefined ? null : sc.hover);
+      view.render();
+
+      sceneNameEl.textContent = sc.title;
+      document.title = 'MolRender 预览 · ' + sc.title;
+      setActiveButton(key);
+      window.__previewScene = key;
+      updateHint(null);
+    }
+
+    function updateHint(hoverIndex) {
+      var base = '拖拽旋转 · 滚轮缩放 · Shift+拖拽平移 · 点击选中（最多 4 个，自动测量）';
+      if (hoverIndex === null || hoverIndex === undefined) {
+        hintEl.textContent = base;
+        return;
+      }
+      var atom = currentMolAtoms()[hoverIndex];
+      if (!atom) { hintEl.textContent = base; return; }
+      hintEl.textContent = '悬停原子 #' + (hoverIndex + 1) + ' ' + atom.symbol +
+        '  (' + Number(atom.x).toFixed(3) + ', ' + Number(atom.y).toFixed(3) + ', ' + Number(atom.z).toFixed(3) + ') Å · ' + base;
+    }
+
+    function currentMolAtoms() {
+      var key = window.__previewScene || 'ballstick';
+      var sc = SCENES[key];
+      if (!sc || !sc.mol || !sc.mol.atoms) return [];
+      return sc.mol.atoms;
+    }
+
+    /* ---------- 交互（页面级，不是 renderer 内部：契约要求 renderer 不注册事件） ---------- */
+    var dragging = false;
+    var dragMode = 'rotate';
+    var lastX = 0, lastY = 0, downX = 0, downY = 0, moved = 0;
+
+    function localPoint(ev) {
+      var rect = canvas.getBoundingClientRect();
+      return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    }
+
+    canvas.addEventListener('mousedown', function (ev) {
+      dragging = true;
+      dragMode = (ev.shiftKey || ev.button === 1 || ev.button === 2) ? 'pan' : 'rotate';
+      lastX = ev.clientX; lastY = ev.clientY;
+      downX = ev.clientX; downY = ev.clientY;
+      moved = 0;
+      ev.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function (ev) {
+      if (dragging) {
+        var dx = ev.clientX - lastX;
+        var dy = ev.clientY - lastY;
+        lastX = ev.clientX; lastY = ev.clientY;
+        moved += Math.abs(dx) + Math.abs(dy);
+        if (dragMode === 'pan') view.pan(dx, dy);
+        else view.rotate(dx, dy);
+        return;
+      }
+      // 悬停高亮
+      if (view) {
+        var p = localPoint(ev);
+        if (p.x >= 0 && p.y >= 0 && p.x <= canvas.clientWidth && p.y <= canvas.clientHeight) {
+          var idx = view.pick(p.x, p.y);
+          view.setHover(idx);
+          canvas.style.cursor = idx === null ? 'grab' : 'pointer';
+          updateHint(idx);
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', function (ev) {
+      if (!dragging) return;
+      dragging = false;
+      if (moved < 4 && ev.button === 0) {
+        var p = localPoint(ev);
+        var idx = view.pick(p.x, p.y);
+        if (idx === null) {
+          applySelection([]);
+        } else {
+          var pos = pageSelection.indexOf(idx);
+          if (ev.shiftKey) {
+            if (pos >= 0) pageSelection.splice(pos, 1);
+            else if (pageSelection.length < 4) pageSelection.push(idx);
+          } else {
+            pageSelection = pos >= 0 ? [] : [idx];
+          }
+          applySelection(pageSelection);
+        }
+        view.render();
+      }
+    });
+
+    canvas.addEventListener('wheel', function (ev) {
+      ev.preventDefault();
+      view.zoom(ev.deltaY < 0 ? 1.12 : 1 / 1.12);
+    }, { passive: false });
+
+    canvas.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
+
+    window.addEventListener('resize', function () {
+      if (view) view.resize();
+    });
+
+    document.querySelectorAll('#bar button[data-scene]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyScene(btn.getAttribute('data-scene'));
+      });
+    });
+
+    /* ---------- 从 URL 选择初始场景：?scene=select / #select / #scene=select ---------- */
+    function initialSceneKey() {
+      var h = String(window.location.hash || '').replace(/^#/, '');
+      var q = String(window.location.search || '');
+      var m = /[?&]scene=([a-z0-9_-]+)/i.exec(q) || /^scene=([a-z0-9_-]+)/i.exec(h) || /^([a-z0-9_-]+)$/i.exec(h);
+      return (m && SCENES[m[1].toLowerCase()]) ? m[1].toLowerCase() : 'ballstick';
+    }
+
+    try {
+      applyScene(initialSceneKey());
+    } catch (err) {
+      showError('初始化场景失败: ' + ((err && err.message) || err));
+    }
+
+    // 供外部（QtWebEngine / CDP 截图脚本）切换场景
+    window.__setScene = applyScene;
+
+    // 稳定出图：再补一帧（虚拟时间预算下 rAF 可能被合并）
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () {
+        try { view.render(); } catch (err) { showError('重绘失败: ' + ((err && err.message) || err)); }
+      });
+    }
+  })();
+  </script>
+</body>
+</html>

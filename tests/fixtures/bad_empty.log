@@ -1,0 +1,14 @@
+ Entering Gaussian System, Link 0=g16
+ ******************************************
+ Gaussian 16:  ES64L-G16RevA.03 25-Dec-2016
+ ******************************************
+
+ #p opt hf/3-21g
+
+ no geometry in this log
+
+ 0 1
+
+ SCF Done:  E(RHF) =  -75.0000000000     A.U. after    8 cycles
+
+ Normal termination of Gaussian 16 at Thu Nov 13 10:03:00 2025.

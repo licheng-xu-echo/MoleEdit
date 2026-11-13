@@ -1,0 +1,8 @@
+#p hf/3-21g
+
+water z-matrix input (should be rejected with a clear Chinese error)
+
+0 1
+O
+H 1 0.9572
+H 1 0.9572 2 104.52

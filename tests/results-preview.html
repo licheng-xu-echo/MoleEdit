@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MolResults preview — self checks</title>
+<link rel="stylesheet" href="../css/results.css">
+<style>
+  :root {
+    --bg: #eef1f6;
+    --panel: #ffffff;
+    --border: #dde3ec;
+    --text: #1e2733;
+    --text-2: #556277;
+    --muted: #8a96a8;
+    --danger: #c0271b;
+    --ok: #157a4b;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    font-size: 13px;
+  }
+  #preview-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    height: 38px;
+    padding: 0 14px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+  }
+  #preview-head > * + * { margin-left: 14px; }
+  #preview-title { font-weight: 700; font-size: 13px; }
+  #preview-sub { color: var(--muted); font-size: 11px; }
+  #preview-status { font-weight: 600; font-size: 12px; margin-left: auto; }
+  #preview-status.is-ok { color: var(--ok); }
+  #preview-status.is-fail { color: var(--danger); }
+  #preview-main { flex: 1 1 auto; display: flex; min-height: 0; }
+  #viewport-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    background: #fff;
+    border-right: 1px solid var(--border);
+  }
+  #viewport-canvas { display: block; width: 100%; height: 100%; }
+  .viewport-caption {
+    position: absolute;
+    left: 10px;
+    bottom: 8px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 11px;
+    pointer-events: none;
+  }
+  #results-panel {
+    flex: none;
+    width: 390px;
+    max-width: 45vw;
+    height: 100%;
+    overflow-y: auto;
+    background: #fff;
+    border-left: 1px solid var(--border);
+  }
+  #preview-footer {
+    flex: none;
+    max-height: 168px;
+    overflow-y: auto;
+    padding: 8px 14px 12px;
+    background: #f8fafc;
+    border-top: 1px solid var(--border);
+    font-size: 11.5px;
+  }
+  #checks-summary { font-weight: 600; }
+  #checks-summary.is-ok { color: var(--ok); }
+  #checks-summary.is-fail { color: var(--danger); }
+  .check-fail { color: var(--danger); font-family: ui-monospace, Consolas, monospace; }
+  .checks-hint { color: var(--muted); margin-left: 8px; font-weight: 400; }
+</style>
+</head>
+<body>
+<header id="preview-head">
+  <span id="preview-title">MolResults preview</span>
+  <span id="preview-sub">INTERFACE2.md §6 self checks · real fixture tests/fixtures/water-opt-freq.log</span>
+  <span id="preview-status">running…</span>
+</header>
+
+<main id="preview-main">
+  <section id="viewport-wrap">
+    <canvas id="viewport-canvas"></canvas>
+    <div class="viewport-caption">3D viewport (renderer) — vibration animation target</div>
+  </section>
+  <aside id="results-panel"></aside>
+</main>
+
+<footer id="preview-footer">
+  <div id="checks-summary">running…</div>
+  <ol id="checks-fails" style="margin:6px 0 0;padding-left:18px;"></ol>
+</footer>
+
+<!-- 真实 fixture（log-dev 的 tools/gen-log-sample.mjs -> tests/fixtures/water-opt-freq.log） -->
+<script type="text/plain" id="fixture-log">
+ Entering Gaussian System, Link 0=g16
+ Initial command:
+ /usr/local/g16/l1.exe "/tmp/scratch/Gau-12345.inp" -scrdir="/tmp/scratch/"
+ Entering Link 1 = /usr/local/g16/l1.exe pid=  12345.
+
+ Copyright (c) 1988-2019, Gaussian, Inc.  All Rights Reserved.
+
+ ---------------------------------------------------------------
+ #p b3lyp/6-31g(d) opt freq
+ ---------------------------------------------------------------
+ Water opt+freq calculation (B3LYP/6-31G(d))
+
+ Symbolic Z-matrix:
+ Charge =  0 Multiplicity = 1
+ O
+ H  1  0.96
+ H  1  0.96  2  104.5
+
+ NAtoms=      3 NActive=      3 NUniq=      2 SFac= 1.00D+00 NAtFMM=   60 NQMAtoms=      3
+
+                         Standard orientation:                         
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1          8            0     0.000000     0.000000     0.119262
+      2          1            0     0.000000     0.763239    -0.477072
+      3          1            0     0.000000    -0.763239    -0.477072
+ ---------------------------------------------------------------------
+ Rotational constants (GHZ):     278.4962     49.8601     41.5451
+
+ SCF Done:  E(RB3LYP) =  -76.4088123456     A.U. after     8 cycles
+             NFock=  8  Conv=0.21D-08     -V/T= 2.0028
+
+ GradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGrad
+ Berny optimization.
+ Cartesian Forces:  Max     0.004321 RMS     0.001234
+
+         Item               Value     Threshold  Converged?
+ Maximum Force             0.004321       0.000450     NO
+ RMS     Force             0.001234       0.000300     NO
+ Maximum Displacement      0.012345       0.001800     NO
+ RMS     Displacement      0.004321       0.001200     NO
+ Predicted change in Energy=-1.234567D-07
+
+                         Standard orientation:                         
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1          8            0     0.000000     0.000000     0.117800
+      2          1            0     0.000000     0.760500    -0.471100
+      3          1            0     0.000000    -0.760500    -0.471100
+ ---------------------------------------------------------------------
+ Rotational constants (GHZ):     279.1234     49.9876     41.6789
+
+ SCF Done:  E(RB3LYP) =  -76.4091234567     A.U. after     6 cycles
+             NFock=  6  Conv=0.21D-08     -V/T= 2.0028
+
+ GradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGrad
+ Berny optimization.
+ Cartesian Forces:  Max     0.000876 RMS     0.000245
+
+         Item               Value     Threshold  Converged?
+ Maximum Force             0.000876       0.000450     NO
+ RMS     Force             0.000245       0.000300     YES
+ Maximum Displacement      0.003456       0.001800     NO
+ RMS     Displacement      0.000987       0.001200     YES
+ Predicted change in Energy=-4.567890D-08
+
+                         Standard orientation:                         
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1          8            0     0.000000     0.000000     0.117300
+      2          1            0     0.000000     0.757200    -0.469200
+      3          1            0     0.000000    -0.757200    -0.469200
+ ---------------------------------------------------------------------
+ Rotational constants (GHZ):     279.5001     49.9999     41.7001
+
+ SCF Done:  E(RB3LYP) =  -76.4093123456     A.U. after     4 cycles
+             NFock=  4  Conv=0.21D-08     -V/T= 2.0028
+
+ GradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGrad
+ Berny optimization.
+ Cartesian Forces:  Max     0.000123 RMS     0.000034
+
+         Item               Value     Threshold  Converged?
+ Maximum Force             0.000123       0.000450     YES
+ RMS     Force             0.000034       0.000300     YES
+ Maximum Displacement      0.000890       0.001800     YES
+ RMS     Displacement      0.000234       0.001200     YES
+ Predicted change in Energy=-2.345678D-09
+
+                         Standard orientation:                         
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1          8            0     0.000000     0.000000     0.117176
+      2          1            0     0.000000     0.756950    -0.468780
+      3          1            0     0.000000    -0.756950    -0.468780
+ ---------------------------------------------------------------------
+ Rotational constants (GHZ):     279.6123     50.0123     41.7123
+
+ SCF Done:  E(RB3LYP) =  -76.4093345678     A.U. after     3 cycles
+             NFock=  3  Conv=0.21D-08     -V/T= 2.0028
+
+ GradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGradGrad
+ Berny optimization.
+ Cartesian Forces:  Max     0.000021 RMS     0.000006
+
+         Item               Value     Threshold  Converged?
+ Maximum Force             0.000021       0.000450     YES
+ RMS     Force             0.000006       0.000300     YES
+ Maximum Displacement      0.000120       0.001800     YES
+ RMS     Displacement      0.000032       0.001200     YES
+ Predicted change in Energy=-1.234567D-10
+
+ Optimization completed.
+    -- Stationary point found.
+
+                          Final structure in terms of initial Z-matrix:
+
+                         Standard orientation:                         
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1          8            0     0.000000     0.000000     0.117176
+      2          1            0     0.000000     0.756950    -0.468780
+      3          1            0     0.000000    -0.756950    -0.468780
+ ---------------------------------------------------------------------
+ Rotational constants (GHZ):     279.6123     50.0123     41.7123
+
+ Harmonic frequencies (cm**-1), IR intensities (KM/Mole), Raman scattering
+ activities (A**4/AMU), depolarization ratios for plane and unpolarized
+ incident light, reduced masses (AMU), force constants (mDyne/A),
+ and normal coordinates:
+                       1                      2                      3
+                      A1                     A1                     B2
+ Frequencies --              1600.1234             3800.5678             3900.1111
+ Red. masses --                 1.0820                1.0772                1.0910
+ Frc consts  --                 1.6342                9.7863               10.0893
+ IR Inten    --                12.3456               45.6789               67.8901
+  Atom  AN      X      Y      Z        X      Y      Z        X      Y      Z
+     1    8   0.000000   0.000000   0.068000   0.000000   0.000000  -0.054000   0.000000   0.000000   0.000000
+     2    1   0.000000   0.070000  -0.034000   0.000000   0.065000   0.027000   0.000000   0.072000   0.000000
+     3    1   0.000000  -0.070000  -0.034000   0.000000  -0.065000   0.027000   0.000000  -0.072000   0.000000
+
+ ------------------
+ - Thermochemistry -
+ ------------------
+ Temperature   298.150 Kelvin.  Pressure   1.00000 Atm.
+ Volume (1000 K):  24414.2 bohr^3
+ Molecular mass:    18.01514 amu.
+ Rotational constants (GHZ): 278.4962 49.8601 41.5451
+ Zero-point correction=                           0.021241 (Hartree/Particle)
+ Thermal correction to Energy=                    0.023456
+ Thermal correction to Enthalpy=                  0.023800
+ Thermal correction to Gibbs Free Energy=         0.003124
+ Sum of electronic and zero-point Energies=             -76.388094
+ Sum of electronic and thermal Energies=                -76.385879
+ Sum of electronic and thermal Enthalpies=              -76.385535
+ Sum of electronic and thermal Free Energies=           -76.406211
+
+ Normal termination of Gaussian 16 at Thu Nov 13 10:15:00 2025.
+</script>
+
+<script>
+  // 捕获页面异常（自检用）
+  window.__pageErrors = [];
+  window.addEventListener('error', function (ev) {
+    try { window.__pageErrors.push(String(ev.message || (ev.error && ev.error.message) || 'error')); } catch (e) {}
+  });
+  window.addEventListener('unhandledrejection', function (ev) {
+    try { window.__pageErrors.push('unhandledrejection: ' + String(ev.reason && ev.reason.message || ev.reason)); } catch (e) {}
+  });
+  (function () {
+    var orig = console.error;
+    console.error = function () {
+      try {
+        window.__pageErrors.push(Array.prototype.map.call(arguments, function (a) {
+          return (a && a.message) ? a.message : String(a);
+        }).join(' '));
+      } catch (e) {}
+      if (orig) orig.apply(console, arguments);
+    };
+  })();
+</script>
+
+<script src="../js/core.js"></script>
+<script src="../js/parsers.js"></script>
+<script src="../js/gausslog.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/renderer.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/results.js"></script>
+
+<script>
+/* ============================================================================
+ * tests/results-preview.html — MolResults 自检（INTERFACE2.md §6.3）
+ * 结果：window.__resultsChecks = { ok, total, done, results: [{name, ok, detail}] }
+ * ========================================================================== */
+(function () {
+  'use strict';
+
+  var checks = [];
+  var requestedFrames = [];
+  var view = null;
+  var parsedFrames = null;
+  var panel = null;
+  var results = null;
+
+  var fixtureEl = document.getElementById('fixture-log');
+  var fixtureText = fixtureEl ? fixtureEl.textContent.replace(/^\s*\n/, '') : '';
+
+  function q(id) { return document.getElementById(id); }
+
+  function check(name, pass, detail) {
+    checks.push({ name: name, ok: !!pass, detail: detail == null ? '' : String(detail) });
+    syncSummary();
+  }
+
+  function syncSummary() {
+    var passed = checks.filter(function (c) { return c.ok; }).length;
+    var summary = q('checks-summary');
+    var status = q('preview-status');
+    if (summary) {
+      summary.textContent = (passed === checks.length ? 'PASS ' : 'FAIL ') + passed + '/' + checks.length + ' checks';
+      summary.className = passed === checks.length ? 'is-ok' : 'is-fail';
+      var hint = summary.querySelector('.checks-hint');
+      if (!hint) {
+        hint = document.createElement('span');
+        hint.className = 'checks-hint';
+        summary.appendChild(hint);
+      }
+      hint.textContent = 'window.__resultsChecks 可读取';
+    }
+    if (status) {
+      status.textContent = passed + '/' + checks.length + (passed === checks.length ? ' passed' : ' · failures listed below');
+      status.className = passed === checks.length ? 'is-ok' : 'is-fail';
+    }
+    var fails = q('checks-fails');
+    if (fails) {
+      fails.innerHTML = '';
+      for (var i = 0; i < checks.length; i++) {
+        if (checks[i].ok) continue;
+        var li = document.createElement('li');
+        li.className = 'check-fail';
+        li.textContent = '✗ ' + checks[i].name + (checks[i].detail ? ' — ' + checks[i].detail : '');
+        fails.appendChild(li);
+      }
+    }
+  }
+
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function nextFrame() {
+    return new Promise(function (r) {
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(function () { r(); });
+      else setTimeout(r, 20);
+    });
+  }
+
+  /** 轮询等待条件成立（共享 headless Chrome 偶发后台 tab 节流时更稳） */
+  async function waitFor(predicate, timeoutMs, intervalMs) {
+    timeoutMs = timeoutMs || 3000;
+    intervalMs = intervalMs || 30;
+    var start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      var ok = false;
+      try { ok = !!predicate(); } catch (e) { ok = false; }
+      if (ok) return true;
+      await wait(intervalMs);
+    }
+    try { return !!predicate(); } catch (e) { return false; }
+  }
+
+  async function waitForVisible(timeoutMs) {
+    return waitFor(function () { return document.visibilityState === 'visible'; }, timeoutMs || 8000, 50);
+  }
+
+  function visible(el) {
+    if (!el) return false;
+    if (el.hidden) return false;
+    if (typeof el.getClientRects === 'function' && el.getClientRects().length === 0) return false;
+    try { return getComputedStyle(el).display !== 'none'; } catch (e) { return true; }
+  }
+
+  function canvasStats(canvas) {
+    if (!canvas || !canvas.width || !canvas.height) return { nonBlank: 0, total: 0, w: 0, h: 0 };
+    var ctx;
+    try { ctx = canvas.getContext('2d'); } catch (e) { return { nonBlank: 0, total: 0, error: String(e) }; }
+    var data;
+    try { data = ctx.getImageData(0, 0, canvas.width, canvas.height).data; }
+    catch (e) { return { nonBlank: 0, total: 0, error: String(e) }; }
+    var total = data.length / 4;
+    var nonBlank = 0;
+    for (var i = 0; i < data.length; i += 4) {
+      if (data[i + 3] > 0 && (data[i] < 250 || data[i + 1] < 250 || data[i + 2] < 250)) nonBlank++;
+    }
+    return { nonBlank: nonBlank, total: total, w: canvas.width, h: canvas.height };
+  }
+
+  function canvasHash(canvas) {
+    if (!canvas || !canvas.width || !canvas.height) return 0;
+    var ctx;
+    try { ctx = canvas.getContext('2d'); } catch (e) { return 0; }
+    var d;
+    try { d = ctx.getImageData(0, 0, canvas.width, canvas.height).data; } catch (e) { return 0; }
+    var h = 2166136261;
+    for (var i = 0; i < d.length; i += 8) {
+      h = ((h ^ d[i]) * 16777619) >>> 0;
+      h = ((h ^ d[i + 1]) * 16777619) >>> 0;
+      h = ((h ^ d[i + 2]) * 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function summaryValue(field) {
+    var box = q('results-summary');
+    if (!box) return null;
+    var el = box.querySelector('[data-field="' + field + '"] .res-value');
+    return el ? el.textContent : null;
+  }
+
+  function summaryLabel(field) {
+    var box = q('results-summary');
+    if (!box) return null;
+    var el = box.querySelector('[data-field="' + field + '"] .res-label');
+    return el ? el.textContent : null;
+  }
+
+  function maxVecLen(disps) {
+    if (!disps || !disps.length) return 0;
+    var maxD = 0;
+    for (var i = 0; i < disps.length; i++) {
+      var v = disps[i];
+      if (!v) continue;
+      var l = Math.sqrt((v[0] || 0) * (v[0] || 0) + (v[1] || 0) * (v[1] || 0) + (v[2] || 0) * (v[2] || 0));
+      if (l > maxD) maxD = l;
+    }
+    return maxD;
+  }
+
+  function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+  /** 在 ms 毫秒内采样位移最大模长（用于验证振幅确实影响位移） */
+  async function sampleMaxDisplacement(ms) {
+    var maxD = 0;
+    var start = Date.now();
+    while (Date.now() - start < ms) {
+      await wait(16);
+      var d = maxVecLen(view && view.getDisplacements ? view.getDisplacements() : null);
+      if (d > maxD) maxD = d;
+    }
+    return maxD;
+  }
+
+  async function run() {
+    syncSummary();
+
+    /* ---- 0. 模块加载 ---- */
+    check('module:charts', window.MolCharts && typeof MolCharts.drawLineChart === 'function',
+      window.MolCharts ? 'v' + MolCharts.version : 'missing');
+    check('module:results', window.MolResults && typeof MolResults.create === 'function',
+      window.MolResults ? 'v' + MolResults.version : 'missing');
+    check('module:gausslog', window.MolGaussLog && typeof MolGaussLog.parse === 'function',
+      window.MolGaussLog ? 'v' + MolGaussLog.version : 'missing (log-dev 尚未交付，需重新运行)');
+    check('module:i18n', window.MolI18n && MolI18n.DEFAULT_LANG === 'en',
+      window.MolI18n ? 'default=' + MolI18n.DEFAULT_LANG : 'missing');
+    check('fixture:embedded', fixtureText.length > 3000, fixtureText.length + ' chars');
+
+    /* ---- 1. i18n / 解析 ---- */
+    try { localStorage.removeItem('moledit.lang'); } catch (e) { /* file:// 下可能被禁 */ }
+    var lang = MolI18n.init();
+    check('i18n:init-en', lang === 'en' && document.documentElement.lang === 'en', 'lang=' + lang);
+
+    var parsed = MolCore.parseFile(fixtureText, { format: 'log' });
+    parsedFrames = parsed.molecules;
+    check('parsers:frames', parsedFrames.length >= 1, 'frames=' + parsedFrames.length);
+
+    results = MolGaussLog.parse(fixtureText);
+    var hasAnalysis = !!(results && MolGaussLog.hasAnalysis(results));
+    check('gausslog:parse', results && results.ok === true && hasAnalysis,
+      'ok=' + (results && results.ok) + ' warnings=' + (results && results.warnings && results.warnings.length));
+    var sm = results.summary;
+    check('gausslog:summary', sm &&
+      Math.abs(sm.finalEnergy + 76.4093345678) < 1e-9 &&
+      sm.frequencies.length === 3 &&
+      sm.opt && sm.opt.steps && sm.opt.steps.length === 4 &&
+      sm.freqFrameIndex === 4,
+      'E=' + (sm && sm.finalEnergy) + ' f=' + (sm && sm.frequencies && sm.frequencies.length) +
+      ' steps=' + (sm && sm.opt && sm.opt.steps && sm.opt.steps.length) + ' freqFrame=' + (sm && sm.freqFrameIndex));
+
+    /* ---- 2. 渲染器 + 视口 ---- */
+    view = MolRender.createView(q('viewport-canvas'), {
+      style: 'ballstick', labels: true, indices: false, showAxes: true
+    });
+    check('renderer:view', view && typeof view.setDisplacements === 'function' &&
+      typeof view.getDisplacements === 'function' && typeof view.project === 'function',
+      'setDisplacements=' + (view && typeof view.setDisplacements));
+    var startIdx = (sm && sm.freqFrameIndex != null && parsedFrames[sm.freqFrameIndex]) ? sm.freqFrameIndex : parsedFrames.length - 1;
+    view.setMolecule(parsedFrames[startIdx]);
+
+    /* ---- 3. 创建面板 ---- */
+    panel = MolResults.create(q('results-panel'), {
+      i18n: MolI18n,
+      getView: function () { return view; },
+      onRequestFrame: function (idx) {
+        requestedFrames.push(idx);
+        if (parsedFrames[idx]) view.setMolecule(parsedFrames[idx]);
+      }
+    });
+    check('panel:create', !!panel && typeof panel.setResults === 'function' && typeof panel.playFrequency === 'function',
+      panel ? 'v' + panel.version : 'missing');
+
+    panel.setResults(results);
+    await waitFor(function () {
+      var info = panel.getChartInfo();
+      return !!(info.energy && info.energy.ok && info.convergence && info.convergence.ok);
+    }, 5000, 40);
+    await wait(100);
+
+    /* ---- 4. DOM id 契约 ---- */
+    var requiredIds = [
+      'results-empty', 'results-content', 'results-job-select', 'results-summary',
+      'results-energy-section', 'results-energy-canvas',
+      'results-conv-section', 'results-conv-canvas',
+      'results-freq-section', 'results-freq-list', 'results-freq-controls',
+      'results-freq-play', 'results-freq-stop', 'results-freq-amplitude',
+      'results-freq-mode-label', 'results-freq-note'
+    ];
+    var missingIds = requiredIds.filter(function (id) { return !q(id); });
+    check('dom:ids', missingIds.length === 0, missingIds.join(',') || 'all ' + requiredIds.length + ' ids present');
+    var outside = requiredIds.filter(function (id) {
+      var el = q(id);
+      return el && !q('results-panel').contains(el);
+    });
+    check('dom:inside-panel', outside.length === 0, outside.join(','));
+
+    var summaryFields = [
+      'natoms', 'route', 'charge', 'multiplicity', 'final-energy', 'termination', 'optimization',
+      'temperature', 'pressure', 'zpe', 'thermal-energy', 'thermal-enthalpy', 'thermal-gibbs',
+      'sum-zpe', 'sum-energy', 'sum-enthalpy', 'sum-gibbs'
+    ];
+    var missingFields = summaryFields.filter(function (f) {
+      return !q('results-summary').querySelector('[data-field="' + f + '"]');
+    });
+    check('dom:summary-fields', missingFields.length === 0,
+      missingFields.join(',') || 'all ' + summaryFields.length + ' data-field rows');
+
+    /* ---- 5. 概要数值 ---- */
+    check('summary:final-energy', summaryValue('final-energy') === '-76.409335', summaryValue('final-energy'));
+    check('summary:atoms-charge', summaryValue('natoms') === '3' && summaryValue('charge') === '0' &&
+      summaryValue('multiplicity') === '1',
+      [summaryValue('natoms'), summaryValue('charge'), summaryValue('multiplicity')].join('/'));
+    check('summary:termination-optimization',
+      summaryValue('termination') === 'Normal' && summaryValue('optimization') === 'Optimized',
+      summaryValue('termination') + ' / ' + summaryValue('optimization'));
+    check('summary:thermochemistry',
+      summaryValue('temperature') === '298.15 K' &&
+      summaryValue('pressure') === '1.00000 atm' &&
+      summaryValue('zpe') === '0.021241' &&
+      summaryValue('thermal-energy') === '0.023456' &&
+      summaryValue('thermal-enthalpy') === '0.023800' &&
+      summaryValue('thermal-gibbs') === '0.003124' &&
+      summaryValue('sum-zpe') === '-76.388094' &&
+      summaryValue('sum-energy') === '-76.385879' &&
+      summaryValue('sum-enthalpy') === '-76.385535' &&
+      summaryValue('sum-gibbs') === '-76.406211',
+      [summaryValue('temperature'), summaryValue('pressure'), summaryValue('zpe'), summaryValue('sum-gibbs')].join(' | '));
+    check('summary:route', /opt/.test(summaryValue('route')) && /freq/.test(summaryValue('route')),
+      summaryValue('route'));
+    check('summary:missing-job-select-hidden', visible(q('results-job-select')) === false,
+      'single-job log should hide job select');
+
+    /* ---- 6. 图表 ---- */
+    var eInfo = panel.getChartInfo().energy;
+    var cInfo = panel.getChartInfo().convergence;
+    check('chart:energy-drawn', eInfo && eInfo.ok === true && eInfo.seriesCount === 1 && eInfo.pointCount === 4,
+      JSON.stringify(eInfo && { ok: eInfo.ok, pts: eInfo.pointCount, reason: eInfo.reason }));
+    check('chart:conv-drawn', cInfo && cInfo.ok === true && cInfo.seriesCount === 4 && cInfo.thresholdCount === 4,
+      JSON.stringify(cInfo && { ok: cInfo.ok, series: cInfo.seriesCount, thresholds: cInfo.thresholdCount, reason: cInfo.reason }));
+    var eStats = canvasStats(q('results-energy-canvas'));
+    var cStats = canvasStats(q('results-conv-canvas'));
+    check('chart:energy-pixels', eStats.nonBlank > 200, JSON.stringify(eStats));
+    check('chart:conv-pixels', cStats.nonBlank > 200, JSON.stringify(cStats));
+    check('ui:sections-visible',
+      visible(q('results-energy-section')) && visible(q('results-conv-section')) && visible(q('results-freq-section')),
+      'energy=' + visible(q('results-energy-section')) + ' conv=' + visible(q('results-conv-section')) +
+      ' freq=' + visible(q('results-freq-section')));
+
+    /* ---- 7. 频率列表 ---- */
+    var rows = q('results-freq-list').querySelectorAll('.freq-row');
+    check('freq:rows', rows.length === 3, 'rows=' + rows.length);
+    var rowTexts = [];
+    for (var ri = 0; ri < rows.length; ri++) rowTexts.push(rows[ri].textContent.replace(/\s+/g, ' ').trim());
+    check('freq:values',
+      /1600\.12/.test(rowTexts[0] || '') && /3800\.57/.test(rowTexts[1] || '') && /3900\.11/.test(rowTexts[2] || ''),
+      rowTexts.join(' | '));
+    check('freq:ir', /IR 12\.3/.test(rowTexts[0] || '') && /IR 45\.7/.test(rowTexts[1] || '') &&
+      /IR 67\.9/.test(rowTexts[2] || ''), rowTexts.join(' | '));
+    check('freq:no-imaginary', q('results-freq-list').querySelectorAll('.freq-row.is-imaginary').length === 0);
+    check('freq:mode-indices',
+      String(rows[0].getAttribute('data-mode-index')) === '0' &&
+      String(rows[2].getAttribute('data-mode-index')) === '2',
+      [rows[0].getAttribute('data-mode-index'), rows[2].getAttribute('data-mode-index')].join(','));
+
+    /* ---- 8. 振动动画 ---- */
+    // 共享 headless Chrome 中后台 tab 的 rAF 会被节流/暂停：确认前台可见后再测动画
+    var wasVisible = await waitForVisible(8000);
+    check('page:visible-for-animation', wasVisible, 'visibilityState=' + document.visibilityState);
+    await wait(80);
+    // 点击频率行 → 选中并播放
+    var row1 = q('results-freq-list').querySelectorAll('.freq-row')[1];
+    row1.click();
+    await wait(140);
+    var rowState = panel.getState();
+    check('anim:row-click-plays', rowState.animating === true && rowState.selectedMode === 1,
+      JSON.stringify({ animating: rowState.animating, selectedMode: rowState.selectedMode }));
+    check('anim:row-active-highlight',
+      (function () {
+        var active = q('results-freq-list').querySelectorAll('.freq-row.is-active');
+        return active.length === 1 && active[0].getAttribute('data-mode-index') === '1';
+      })(), 'active rows=' + q('results-freq-list').querySelectorAll('.freq-row.is-active').length);
+    panel.stopAnimation();
+    await wait(140);
+
+    var state0 = panel.getState();
+    check('state:initial', state0.available === true && state0.frequencyCount === 3 &&
+      state0.hasCharts === true && state0.animating === false && state0.paused === false,
+      JSON.stringify(state0));
+    var initialHash = canvasHash(q('viewport-canvas'));
+
+    panel.playFrequency(0);
+    var statePlay = panel.getState();
+    check('anim:starts', statePlay.animating === true && statePlay.selectedMode === 0, JSON.stringify(statePlay));
+    check('anim:freq-frame-requested',
+      sm.freqFrameIndex != null && requestedFrames.indexOf(sm.freqFrameIndex) >= 0,
+      'requested=' + requestedFrames.join(',') + ' expected=' + sm.freqFrameIndex);
+
+    // 等待动画产生非零位移（最多 5s，兼容共享浏览器偶发的 tab 节流）
+    await waitFor(function () { return maxVecLen(view.getDisplacements()) > 0.02; }, 5000, 25);
+    await wait(130);
+    var midHash = canvasHash(q('viewport-canvas'));
+    check('anim:canvas-changes', midHash !== initialHash, initialHash + ' -> ' + midHash);
+    var disps = view.getDisplacements();
+    check('anim:displacements', !!disps && disps.length > 0 && maxVecLen(disps) > 0.02,
+      'len=' + (disps ? disps.length : 'null') + ' max=' + maxVecLen(disps).toFixed(4) + ' Å');
+    var activeRow = q('results-freq-list').querySelector('.freq-row.is-active');
+    check('anim:active-row', !!activeRow && activeRow.getAttribute('data-mode-index') === '0',
+      activeRow ? activeRow.textContent.replace(/\s+/g, ' ').trim() : 'none');
+
+    q('results-freq-play').click();   // pause
+    var statePaused = panel.getState();
+    check('anim:pause', statePaused.animating === false && statePaused.paused === true, JSON.stringify(statePaused));
+    check('anim:pause-keeps-displacements', view.getDisplacements() !== null);
+
+    q('results-freq-play').click();   // resume
+    check('anim:resume', panel.getState().animating === true, JSON.stringify(panel.getState()));
+
+    panel.setAmplitude(100);
+    check('anim:amplitude',
+      panel.getState().amplitude === 100 && String(q('results-freq-amplitude').value) === '100',
+      'amplitude=' + panel.getState().amplitude + ' slider=' + q('results-freq-amplitude').value);
+    var sliderEl = q('results-freq-amplitude');
+    sliderEl.value = '20';
+    sliderEl.dispatchEvent(new Event('input'));
+    check('anim:amplitude-slider-input',
+      panel.getState().amplitude === 20 && String(sliderEl.value) === '20',
+      'amplitude=' + panel.getState().amplitude);
+
+    // 振幅实时影响位移幅度：100% 最大位移约 0.5 Å，20% 约 0.1 Å
+    panel.setAmplitude(100);
+    await waitFor(function () { return maxVecLen(view.getDisplacements()) > 0.02; }, 5000, 25);
+    var bigDisp = await sampleMaxDisplacement(500);
+    panel.setAmplitude(20);
+    var smallDisp = await sampleMaxDisplacement(500);
+    check('anim:amplitude-affects-displacement',
+      bigDisp > 0.3 && smallDisp > 0.02 && smallDisp < 0.16,
+      'max@100%=' + bigDisp.toFixed(3) + ' Å, max@20%=' + smallDisp.toFixed(3) + ' Å');
+    await wait(160);
+
+    q('results-freq-stop').click();
+    await wait(160);
+    var stateStopped = panel.getState();
+    check('anim:stop',
+      stateStopped.animating === false && stateStopped.paused === false && stateStopped.selectedMode === null,
+      JSON.stringify(stateStopped));
+    check('anim:stop-clears-displacements', view.getDisplacements() === null);
+    var stopHash = canvasHash(q('viewport-canvas'));
+    check('anim:stop-restores-canvas', stopHash === initialHash, initialHash + ' vs ' + stopHash);
+
+    /* ---- 8b. tab 隐藏：硬停止动画并清空视口位移（保留 selectedMode 高亮/振幅） ---- */
+    panel.playFrequency(0);
+    await waitFor(function () { return maxVecLen(view.getDisplacements()) > 0.02; }, 5000, 25);
+    check('active:play-before-hide', panel.getState().animating === true, JSON.stringify(panel.getState()));
+    panel.setActive(false);
+    await waitFor(function () { return view.getDisplacements() === null; }, 2000, 25);
+    await wait(130);
+    var hiddenState = panel.getState();
+    check('active:hide-stops-animation',
+      hiddenState.animating === false && hiddenState.paused === false,
+      JSON.stringify({ animating: hiddenState.animating, paused: hiddenState.paused }));
+    check('active:hide-clears-displacements', view.getDisplacements() === null,
+      JSON.stringify(view.getDisplacements()));
+    var hiddenHash = canvasHash(q('viewport-canvas'));
+    check('active:hide-restores-viewport', hiddenHash === initialHash, initialHash + ' vs ' + hiddenHash);
+    check('active:hide-keeps-selection',
+      hiddenState.selectedMode === 0 &&
+      q('results-freq-list').querySelectorAll('.freq-row.is-active').length === 1 &&
+      q('results-freq-play').textContent === '▶' &&
+      /1600\.12/.test(q('results-freq-mode-label').textContent || ''),
+      'selected=' + hiddenState.selectedMode +
+      ' activeRows=' + q('results-freq-list').querySelectorAll('.freq-row.is-active').length +
+      ' playBtn=' + q('results-freq-play').textContent +
+      ' label=' + q('results-freq-mode-label').textContent);
+    panel.setActive(true);
+    var reshownState = panel.getState();
+    check('active:reshow-not-auto-resumed',
+      reshownState.animating === false && reshownState.paused === false && reshownState.selectedMode === 0,
+      JSON.stringify({ animating: reshownState.animating, paused: reshownState.paused, selected: reshownState.selectedMode }));
+    // 切回 Results 后再次播放应正常
+    panel.playFrequency();
+    await waitFor(function () {
+      return panel.getState().animating === true && maxVecLen(view.getDisplacements()) > 0.02;
+    }, 5000, 25);
+    check('active:reshow-play-works',
+      panel.getState().animating === true && panel.getState().selectedMode === 0,
+      JSON.stringify(panel.getState()));
+    panel.stopAnimation();
+    await waitFor(function () {
+      return canvasStats(q('results-energy-canvas')).nonBlank > 200 &&
+        canvasStats(q('results-conv-canvas')).nonBlank > 200;
+    }, 3000, 50);
+    check('active:reshow-charts', canvasStats(q('results-energy-canvas')).nonBlank > 200 &&
+      canvasStats(q('results-conv-canvas')).nonBlank > 200,
+      JSON.stringify(canvasStats(q('results-energy-canvas'))));
+
+    /* ---- 9. 无位移模式：playFrequency 抛本地化错误 ---- */
+    var resultsNoDisp = deepClone(results);
+    resultsNoDisp.summary.frequencies[1].displacements = [];
+    resultsNoDisp.jobs[0].frequencies[1].displacements = [];
+    panel.setResults(resultsNoDisp);
+    await wait(60);
+    var noDispError = null;
+    try { panel.playFrequency(1); } catch (err) { noDispError = err; }
+    check('error:no-displacements', !!noDispError && /displacement|位移/i.test(noDispError.message),
+      noDispError ? noDispError.message : 'no error thrown');
+    panel.setResults(results);
+    await wait(100);
+
+    /* ---- 10. 空状态 / 清空 ---- */
+    panel.setResults(null);
+    var emptyState = panel.getState();
+    check('empty:shown',
+      visible(q('results-empty')) && !visible(q('results-content')) &&
+      emptyState.available === false && emptyState.frequencyCount === 0,
+      JSON.stringify(emptyState));
+    panel.setResults(results);
+    await wait(140);
+    check('empty:restore',
+      !q('results-content').hidden &&
+      q('results-freq-list').querySelectorAll('.freq-row').length === 3 &&
+      panel.getState().available === true,
+      'rows=' + q('results-freq-list').querySelectorAll('.freq-row').length);
+
+    /* ---- 10a. 无优化/无频率数据：对应 section 隐藏 ---- */
+    var minimal = deepClone(results);
+    minimal.summary.opt = null;
+    minimal.summary.hasOptimization = false;
+    minimal.summary.hasFrequencies = false;
+    minimal.summary.hasThermochemistry = false;
+    minimal.summary.energySteps = [];
+    minimal.summary.frequencies = [];
+    minimal.jobs[0].optSteps = [];
+    minimal.jobs[0].optimization = null;
+    minimal.jobs[0].scfEnergies = [];
+    minimal.jobs[0].frequencies = [];
+    minimal.jobs[0].thermochemistry = null;
+    panel.setResults(minimal);
+    await wait(120);
+    check('no-data:hides-sections',
+      q('results-energy-section').hidden === true &&
+      q('results-conv-section').hidden === true &&
+      q('results-freq-section').hidden === true,
+      'energy=' + q('results-energy-section').hidden + ' conv=' + q('results-conv-section').hidden +
+      ' freq=' + q('results-freq-section').hidden);
+    check('no-data:summary-still-available',
+      panel.getState().available === true && summaryValue('final-energy') === '-76.409335',
+      JSON.stringify({ available: panel.getState().available, e: summaryValue('final-energy') }));
+
+    /* ---- 10c. 单点能：只画一个点并标注绝对能量 ---- */
+    var single = deepClone(results);
+    single.summary.energySteps = [{ step: 1, energy: -76.4000001111 }];
+    single.summary.finalEnergy = -76.4000001111;
+    single.summary.opt = null;
+    single.jobs[0].optSteps = [];
+    single.jobs[0].scfEnergies = [{ step: 1, energy: -76.4000001111 }];
+    single.jobs[0].optimization = null;
+    panel.setResults(single);
+    await waitFor(function () {
+      var i = panel.getChartInfo().energy;
+      return !!(i && i.ok && i.pointCount === 1);
+    }, 4000, 40);
+    check('single-point:note',
+      !q('results-energy-note').hidden && /Single point/.test(q('results-energy-note').textContent || ''),
+      q('results-energy-note').textContent);
+    var spInfo = panel.getChartInfo().energy;
+    check('single-point:chart', spInfo && spInfo.ok === true && spInfo.pointCount === 1,
+      JSON.stringify(spInfo && { ok: spInfo.ok, pts: spInfo.pointCount, reason: spInfo.reason }));
+    panel.setResults(results);
+    await wait(160);
+
+    /* ---- 10d. 多 job：job select 显示并可切换概要 ---- */
+    var multi = deepClone(results);
+    var job2 = deepClone(results.jobs[0]);
+    job2.route = 'second job route mp2/6-31g(d)';
+    job2.charge = 1;
+    multi.jobs.push(job2);
+    multi.summary.jobCount = 2;
+    panel.setResults(multi);
+    await wait(160);
+    var jobSelectEl = q('results-job-select');
+    check('job-select:shown', visible(jobSelectEl) && jobSelectEl.options.length === 2,
+      'visible=' + visible(jobSelectEl) + ' options=' + jobSelectEl.options.length);
+    jobSelectEl.value = '1';
+    jobSelectEl.dispatchEvent(new Event('change'));
+    await wait(120);
+    check('job-select:switches', /second job route/.test(summaryValue('route') || ''),
+      summaryValue('route'));
+    panel.setResults(results);
+    await wait(160);
+
+    /* ---- 11. 语言切换 ---- */
+    /* ---- 10e. 隐藏容器中创建：显示后 setActive(true) 应补绘图表 ---- */
+    var hiddenWrap = document.createElement('div');
+    hiddenWrap.id = 'results-panel-hidden';
+    hiddenWrap.style.cssText = 'position:fixed;left:0;top:0;width:360px;height:640px;overflow:auto;background:#fff;display:none;';
+    document.body.appendChild(hiddenWrap);
+    var panelHidden = MolResults.create(hiddenWrap, { i18n: MolI18n, getView: function () { return view; } });
+    panelHidden.setResults(results);
+    panelHidden.setActive(false);
+    await wait(120);
+    hiddenWrap.style.display = 'block';
+    panelHidden.setActive(true);
+    await waitFor(function () {
+      return canvasStats(hiddenWrap.querySelector('#results-energy-canvas')).nonBlank > 200;
+    }, 4000, 50);
+    var hiddenStats = canvasStats(hiddenWrap.querySelector('#results-energy-canvas'));
+    check('deferred:charts-after-show', hiddenStats.nonBlank > 200, JSON.stringify(hiddenStats));
+    panelHidden.dispose();
+    hiddenWrap.remove();
+
+    /* ---- 11. 语言切换 ---- */
+    check('i18n:en-ui',
+      summaryLabel('natoms') === 'Atoms' && q('results-energy-title').textContent === 'Energy profile' &&
+      q('results-conv-title').textContent === 'Optimization convergence',
+      [summaryLabel('natoms'), q('results-energy-title').textContent].join(' / '));
+    MolI18n.setLang('zh');
+    await waitFor(function () {
+      return summaryLabel('natoms') === '原子数' && q('results-energy-title').textContent === '能量曲线';
+    }, 2000, 40);
+    check('i18n:zh-ui',
+      summaryLabel('natoms') === '原子数' &&
+      q('results-energy-title').textContent === '能量曲线' &&
+      q('results-conv-title').textContent === '优化收敛' &&
+      q('results-freq-title').textContent === '振动频率',
+      [summaryLabel('natoms'), q('results-energy-title').textContent].join(' / '));
+    check('i18n:zh-values-unchanged', summaryValue('final-energy') === '-76.409335',
+      summaryValue('final-energy'));
+    await waitFor(function () { return canvasStats(q('results-energy-canvas')).nonBlank > 200; }, 3000, 50);
+    var zhStats = canvasStats(q('results-energy-canvas'));
+    check('i18n:zh-chart-redraw', zhStats.nonBlank > 200, JSON.stringify(zhStats));
+    MolI18n.setLang('en');
+    await waitFor(function () {
+      return summaryLabel('natoms') === 'Atoms' && q('results-energy-title').textContent === 'Energy profile';
+    }, 2000, 40);
+    check('i18n:back-en',
+      summaryLabel('natoms') === 'Atoms' && q('results-energy-title').textContent === 'Energy profile');
+
+    /* ---- 12. 虚频标红（独立小面板，避免污染主面板） ---- */
+    var secondary = document.createElement('div');
+    secondary.id = 'results-panel-secondary';
+    secondary.style.cssText = 'position:fixed;left:-9999px;top:0;width:360px;height:640px;overflow:auto;background:#fff;';
+    document.body.appendChild(secondary);
+    var resultsImag = deepClone(results);
+    var imagFreq = resultsImag.summary.frequencies[0];
+    imagFreq.frequency = -123.456;
+    imagFreq.imaginary = true;
+    if (resultsImag.jobs[0] && resultsImag.jobs[0].frequencies[0]) {
+      resultsImag.jobs[0].frequencies[0].frequency = -123.456;
+      resultsImag.jobs[0].frequencies[0].imaginary = true;
+    }
+    resultsImag.summary.frequencies[2].irIntensity = null;
+    if (resultsImag.jobs[0] && resultsImag.jobs[0].frequencies[2]) {
+      resultsImag.jobs[0].frequencies[2].irIntensity = null;
+    }
+    var panel2 = MolResults.create(secondary, { i18n: MolI18n, getView: function () { return null; } });
+    panel2.setResults(resultsImag);
+    await wait(120);
+    var imagRow = secondary.querySelector('#results-freq-list .freq-row.is-imaginary');
+    check('freq:imaginary-style', !!imagRow && /-123\.46/.test(imagRow.textContent),
+      imagRow ? imagRow.textContent.replace(/\s+/g, ' ').trim() : 'no imaginary row');
+    var irMissingEl = secondary.querySelector('#results-freq-list .freq-row[data-mode-index="2"] .freq-ir');
+    check('freq:ir-missing', !!irMissingEl && /IR —/.test(irMissingEl.textContent),
+      irMissingEl ? irMissingEl.textContent : 'none');
+    var noViewError = null;
+    try { panel2.playFrequency(1); } catch (err) { noViewError = err; }
+    check('error:no-view', !!noViewError && /view|视口/i.test(noViewError.message),
+      noViewError ? noViewError.message : 'no error thrown');
+    panel2.dispose();
+    secondary.remove();
+    check('dispose:cleanup', q('results-panel-secondary') === null);
+
+    /* ---- 13. 页面无异常 ---- */
+    check('page:no-errors', window.__pageErrors.length === 0,
+      window.__pageErrors.slice(0, 3).join(' || '));
+
+    /* ---- 收尾：恢复 EN + 主面板结果，供截图 ---- */
+    try { MolI18n.setLang('en'); } catch (e) {}
+    panel.setResults(results);
+    panel.setAmplitude(50);
+    panel.setActive(true);
+    await wait(160);
+    window.__resultsDemo = { panel: panel, view: view, results: results, frames: parsedFrames, requestedFrames: requestedFrames };
+    syncSummary();
+  }
+
+  function finish() {
+    var passed = checks.filter(function (c) { return c.ok; }).length;
+    window.__resultsChecks = {
+      ok: passed,
+      total: checks.length,
+      done: true,
+      results: checks
+    };
+    var status = q('preview-status');
+    if (status) status.textContent = passed + '/' + checks.length + (passed === checks.length ? ' passed' : ' · see failures');
+    syncSummary();
+  }
+
+  run().then(finish, function (err) {
+    check('fatal', false, err && (err.stack || err.message || String(err)));
+    finish();
+  });
+})();
+</script>
+</body>
+</html>
