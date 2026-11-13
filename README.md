@@ -228,6 +228,13 @@ node tests/e2e.mjs              # CDP end-to-end (needs a headless Chrome with C
 
 Reports and screenshots: `tests/e2e-report.json` (product md5 snapshot + visual QA), `screenshots/e2e-*.png`, `screenshots/results-*.png`, `shots/renderer-*.png`, `docs/*.png`.
 
+## Credits
+
+- **Human developer / maintainer**: [@licheng-xu-echo](https://github.com/licheng-xu-echo)
+- **AI-assisted development**: this project was built together with **DeepSeek** (model `deepseek-flash`, running in the **DeepSeek Harness / DSH agent**). AI assistance covered the molecular core (`js/core.js`), the XYZ/SDF/GJF/LOG parsers, Gaussian log result analysis (`js/gausslog.js`), the Canvas 2D renderer, the UI and result panel, i18n, the Linux/macOS launchers, and the automated test suites.
+- **Third-party libraries**: none — the app is 100% vanilla HTML/CSS/JavaScript with a hand-written Canvas 2D renderer; no CDN, no framework, no npm runtime dependencies.
+- See [CREDITS.md](CREDITS.md) for details.
+
 ## Known limitations / FAQ
 
 - **Z-matrix input** (old `.gjf` files using internal coordinates) is not supported yet — convert to Cartesian coordinates first.
@@ -458,6 +465,13 @@ node tests/e2e.mjs              # CDP 端到端（需常驻 headless Chrome，�
 **跨平台说明**：Linux/macOS 启动脚本为纯 POSIX bash，已在 Git Bash（Windows 上的 POSIX 兼容层）实测：`bash -n`、Linux/macOS/server 三种 `--dry-run` 分支、以及 `launch.sh --server` 真实拉起 HTTP 服务并成功访问 `index.html`、`js/*.js`、`samples/water-opt-freq.log`（HTTP 200）。**本会话未在原生 Linux/macOS 硬件上实机运行**；脚本仅使用 `open` / `xdg-open` / `gio` / `python3` / `node` 等标准命令。
 
 报告与截图：`tests/e2e-report.json`（含 product md5 与 visualQA）、`screenshots/e2e-*.png`、`screenshots/results-*.png`、`shots/renderer-*.png`、`docs/*.png`。
+
+## 致谢
+
+- **人类开发者 / 维护者**：[@licheng-xu-echo](https://github.com/licheng-xu-echo)
+- **AI 辅助开发**：本项目由 **DeepSeek**（模型 `deepseek-flash`，通过 **DeepSeek Harness / DSH Agent** 运行）协助完成，涵盖分子核心（`js/core.js`）、XYZ/SDF/GJF/LOG 解析器、Gaussian LOG 结果分析（`js/gausslog.js`）、Canvas 2D 渲染器、界面与结果面板、国际化、Linux/macOS 启动脚本以及自动化测试套件。
+- **第三方依赖**：无 —— 应用为 100% 原生 HTML/CSS/JavaScript + 手写 Canvas 2D 渲染器，无 CDN、无框架、无 npm 运行时依赖。
+- 详见 [CREDITS.md](CREDITS.md)。
 
 ## 常见问题 / 已知限制
 
